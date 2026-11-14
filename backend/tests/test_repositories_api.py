@@ -90,3 +90,22 @@ def test_scan_reports_clone_failures_and_still_cleans_up(
     assert response.status_code == 502
     assert response.json()["error"]["code"] == "clone_failed"
     assert list(workspace.iterdir()) == []
+
+
+def test_analyze_returns_the_full_analysis_and_cleans_up(
+    client: TestClient, workspace: Path
+) -> None:
+    response = client.post(
+        "/api/repositories/analyze",
+        json={"url": "https://github.com/octocat/hello-world"},
+    )
+
+    assert response.status_code == 200
+    body = response.json()
+    assert len(body["analysis_id"]) == 32
+    assert body["scan"]["file_count"] == 2
+    assert body["languages"]["primary"] == "Python"
+    assert body["tree"]["name"] == "hello-world"
+    assert [n["id"] for n in body["graph"]["nodes"]] == ["src/app.py"]
+    assert body["architecture"]["modules"][0]["id"] == "src"
+    assert list(workspace.iterdir()) == []

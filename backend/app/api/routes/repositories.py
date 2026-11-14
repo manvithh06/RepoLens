@@ -1,6 +1,9 @@
+import asyncio
+
 from fastapi import APIRouter
 
 from app.api.deps import SettingsDep
+from app.schemas.analysis import RepositoryAnalysis
 from app.schemas.repository import (
     RepositoryCheckRequest,
     RepositoryInfo,
@@ -9,6 +12,7 @@ from app.schemas.repository import (
 from app.services.acquisition.github_client import fetch_repo_info
 from app.services.acquisition.repository import acquired_repository, summarize_scan
 from app.services.acquisition.url_validator import parse_github_url
+from app.services.intelligence.analysis import analyze_repository
 
 router = APIRouter(prefix="/repositories", tags=["repositories"])
 
@@ -32,3 +36,15 @@ async def scan_repository(
     info = await fetch_repo_info(ref, settings.github_token.get_secret_value())
     async with acquired_repository(ref, info, settings.workspace_dir) as repo:
         return summarize_scan(repo)
+
+
+@router.post("/analyze", response_model=RepositoryAnalysis)
+async def analyze(
+    payload: RepositoryCheckRequest,
+    settings: SettingsDep,
+) -> RepositoryAnalysis:
+    """Clone, analyse and delete the clone before the response is sent."""
+    ref = parse_github_url(payload.url)
+    info = await fetch_repo_info(ref, settings.github_token.get_secret_value())
+    async with acquired_repository(ref, info, settings.workspace_dir) as repo:
+        return await asyncio.to_thread(analyze_repository, repo)
