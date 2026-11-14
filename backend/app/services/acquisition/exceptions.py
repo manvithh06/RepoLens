@@ -24,3 +24,18 @@ class GitHubRateLimited(AppError):
 class GitHubUnavailable(AppError):
     status_code = 502
     code = "github_unavailable"
+
+
+class CloneFailed(AppError):
+    status_code = 502
+    code = "clone_failed"
+
+
+class CloneTimeout(AppError):
+    status_code = 504
+    code = "clone_timeout"
+
+
+class ServerBusy(AppError):
+    status_code = 503
+    code = "server_busy"

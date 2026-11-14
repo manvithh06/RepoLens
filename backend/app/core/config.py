@@ -20,6 +20,7 @@ class Settings(BaseSettings):
     log_level: str = "INFO"
     cors_origins: str = "http://localhost:5173"
     github_token: SecretStr = SecretStr("")
+    workspace_dir: Path = BACKEND_DIR / "workspace"
 
     @property
     def is_development(self) -> bool:

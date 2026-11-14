@@ -9,7 +9,9 @@ from app import __version__
 from app.api.router import api_router
 from app.core.config import get_settings
 from app.core.errors import register_error_handlers
+from app.core.limits import STALE_WORKSPACE_SECONDS
 from app.core.logging import setup_logging
+from app.services.acquisition.workspace import cleanup_stale_workspaces
 
 logger = logging.getLogger(__name__)
 
@@ -18,6 +20,11 @@ logger = logging.getLogger(__name__)
 async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     settings = get_settings()
     logger.info("Starting %s v%s (%s)", settings.app_name, __version__, settings.app_env)
+
+    removed = cleanup_stale_workspaces(settings.workspace_dir, STALE_WORKSPACE_SECONDS)
+    if removed:
+        logger.info("Removed %d stale workspace(s) left by an earlier run", removed)
+
     yield
     logger.info("Shutting down %s", settings.app_name)
 
