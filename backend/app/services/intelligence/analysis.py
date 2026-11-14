@@ -8,6 +8,7 @@ from app.services.intelligence.entry_points import find_entry_points
 from app.services.intelligence.frameworks import detect_frameworks
 from app.services.intelligence.graph import build_architecture, build_import_graph
 from app.services.intelligence.imports import collect_imports
+from app.services.intelligence.improvements import Context, find_improvements
 from app.services.intelligence.languages import detect_languages
 from app.services.intelligence.manifests import parse_manifests
 from app.services.intelligence.reader import RepoReader
@@ -19,16 +20,29 @@ def analyze_repository(repo: AcquiredRepository) -> RepositoryAnalysis:
     files = repo.filtered.files
     reader = RepoReader(repo.root, files)
 
+    scan = summarize_scan(repo)
     manifests = parse_manifests(reader)
     imports = collect_imports(reader)
+    entry_points = find_entry_points(reader, manifests)
+    graph = build_import_graph(reader, imports)
+    improvements = find_improvements(
+        Context(
+            reader=reader,
+            scan=scan,
+            manifests=manifests,
+            graph=graph,
+            entry_points=entry_points,
+        )
+    )
     return RepositoryAnalysis(
         analysis_id=uuid.uuid4().hex,
-        scan=summarize_scan(repo),
+        scan=scan,
         languages=detect_languages(files),
         tree=build_tree(files, root_name=repo.info.name),
         manifests=manifests,
         frameworks=detect_frameworks(manifests, reader.paths),
-        entry_points=find_entry_points(reader, manifests),
-        graph=build_import_graph(reader, imports),
+        entry_points=entry_points,
+        graph=graph,
         architecture=build_architecture(reader, imports),
+        improvements=improvements,
     )

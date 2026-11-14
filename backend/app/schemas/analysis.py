@@ -126,6 +126,34 @@ class ArchitectureGraph(BaseModel):
     edges: list[ArchitectureEdge]
 
 
+Severity = Literal["high", "medium", "low"]
+FindingCategory = Literal[
+    "Security",
+    "Testing",
+    "Documentation",
+    "Dependencies",
+    "Maintainability",
+    "Tooling",
+    "CI and deployment",
+]
+FindingStatus = Literal["Confirmed", "Potential"]
+
+
+class Finding(BaseModel):
+    id: str  # which check produced it
+    title: str
+    severity: Severity
+    category: FindingCategory
+    # Confirmed: a deterministic rule found it. Potential: a heuristic or model guess.
+    status: FindingStatus
+    evidence: list[Evidence]  # empty when the finding is that something is missing
+    evidence_total: int = 0  # evidence found before the list was capped
+    detail: str | None = None
+    why: str
+    fix: str
+    impact: int = Field(default=0, exclude=True)  # tie-breaker for ranking only
+
+
 class RepositoryAnalysis(BaseModel):
     analysis_id: str
     scan: RepositoryScan
@@ -136,3 +164,4 @@ class RepositoryAnalysis(BaseModel):
     entry_points: list[EntryPoint]
     graph: ImportGraph
     architecture: ArchitectureGraph
+    improvements: list[Finding]

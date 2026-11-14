@@ -5,6 +5,7 @@ import type { RepositoryAnalysis } from '../types/api'
 import { Architecture } from './analysis/Architecture'
 import { EntryPoints } from './analysis/EntryPoints'
 import { FileTree } from './analysis/FileTree'
+import { Improvements } from './analysis/Improvements'
 import { Overview } from './analysis/Overview'
 import { Packages } from './analysis/Packages'
 import { Stack } from './analysis/Stack'
@@ -15,12 +16,16 @@ const SECTIONS = [
   ['stack', 'Stack'],
   ['entry-points', 'Entry points'],
   ['architecture', 'Architecture'],
+  ['improvements', 'Improvements'],
   ['structure', 'Structure'],
   ['packages', 'Packages'],
   ['files', 'Files'],
 ] as const
 
-function number(position: number): string {
+type SectionId = (typeof SECTIONS)[number][0]
+
+function number(id: SectionId): string {
+  const position = SECTIONS.findIndex(([section]) => section === id) + 1
   return String(position).padStart(2, '0')
 }
 
@@ -43,10 +48,10 @@ export function AnalysisResult({ analysis }: { analysis: RepositoryAnalysis }) {
     <RepoLinksContext value={links}>
       <nav aria-label="Report sections" className="mb-8 overflow-x-auto border-y-[1.5px] border-ink py-2">
         <ol className="flex gap-5 whitespace-nowrap text-sm">
-          {SECTIONS.map(([id, label], position) => (
+          {SECTIONS.map(([id, label]) => (
             <li key={id}>
               <a href={`#${id}`} className="text-ink-soft hover:text-ink hover:underline">
-                <span className="mr-1.5 font-mono text-xs text-signal">{number(position + 1)}</span>
+                <span className="mr-1.5 font-mono text-xs text-signal">{number(id)}</span>
                 {label}
               </a>
             </li>
@@ -55,19 +60,20 @@ export function AnalysisResult({ analysis }: { analysis: RepositoryAnalysis }) {
       </nav>
 
       <div className="space-y-8">
-        <Overview analysis={analysis} index={number(1)} />
-        <Stack frameworks={analysis.frameworks} index={number(2)} />
-        <EntryPoints entries={analysis.entry_points} index={number(3)} />
-        <Architecture architecture={analysis.architecture} graph={analysis.graph} index={number(4)} />
+        <Overview analysis={analysis} index={number('overview')} />
+        <Stack frameworks={analysis.frameworks} index={number('stack')} />
+        <EntryPoints entries={analysis.entry_points} index={number('entry-points')} />
+        <Architecture architecture={analysis.architecture} graph={analysis.graph} index={number('architecture')} />
+        <Improvements findings={analysis.improvements} index={number('improvements')} />
         <div className="grid items-start gap-8 lg:grid-cols-2">
-          <FileTree tree={analysis.tree} entryPaths={entryPaths} index={number(5)} />
+          <FileTree tree={analysis.tree} entryPaths={entryPaths} index={number('structure')} />
           <Packages
             packages={analysis.graph.external_packages}
             manifests={analysis.manifests}
-            index={number(6)}
+            index={number('packages')}
           />
         </div>
-        <Panel index={number(7)} title="Files" id="files">
+        <Panel index={number('files')} title="Files" id="files">
           <div className="grid gap-8 md:grid-cols-2">
             <div>
               <p className="kicker mb-3">Types kept</p>

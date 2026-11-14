@@ -162,4 +162,20 @@ export interface RepositoryAnalysis {
   entry_points: EntryPoint[]
   graph: ImportGraph
   architecture: ArchitectureGraph
+  improvements: Finding[]
+}
+
+export type Severity = 'high' | 'medium' | 'low'
+
+export interface Finding {
+  id: string
+  title: string
+  severity: Severity
+  category: string
+  status: 'Confirmed' | 'Potential'
+  evidence: Evidence[]
+  evidence_total: number
+  detail: string | null
+  why: string
+  fix: string
 }
