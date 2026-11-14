@@ -37,7 +37,15 @@ def test_keeps_normal_source_and_config_files(tmp_path: Path) -> None:
 
 def test_skips_dependency_build_and_cache_folders(tmp_path: Path) -> None:
     _write(tmp_path, "README.md")
-    for folder in ("node_modules", ".git", "venv", "dist", "build", "__pycache__", "pkg.egg-info"):
+    for folder in (
+        "node_modules",
+        ".git",
+        "venv",
+        "dist",
+        "build",
+        "__pycache__",
+        "pkg.egg-info",
+    ):
         _write(tmp_path, f"{folder}/inner.txt")
 
     result = filter_repository(tmp_path)
@@ -47,7 +55,13 @@ def test_skips_dependency_build_and_cache_folders(tmp_path: Path) -> None:
 
 
 def test_skips_lock_files_but_keeps_manifests(tmp_path: Path) -> None:
-    for name in ("package.json", "package-lock.json", "poetry.lock", "yarn.lock", "go.sum"):
+    for name in (
+        "package.json",
+        "package-lock.json",
+        "poetry.lock",
+        "yarn.lock",
+        "go.sum",
+    ):
         _write(tmp_path, name)
 
     result = filter_repository(tmp_path)

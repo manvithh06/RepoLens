@@ -42,12 +42,18 @@ def source_repo(tmp_path: Path) -> Path:
 def _clone(source: Path, destination: Path, timeout: float = 120.0) -> None:
     asyncio.run(
         shallow_clone(
-            source.as_uri(), "main", destination, allowed_protocols="file", timeout=timeout
+            source.as_uri(),
+            "main",
+            destination,
+            allowed_protocols="file",
+            timeout=timeout,
         )
     )
 
 
-def test_clone_copies_files_and_removes_git_folder(source_repo: Path, tmp_path: Path) -> None:
+def test_clone_copies_files_and_removes_git_folder(
+    source_repo: Path, tmp_path: Path
+) -> None:
     destination = tmp_path / "dest"
 
     _clone(source_repo, destination)
@@ -78,7 +84,10 @@ def test_unknown_branch_fails_cleanly(source_repo: Path, tmp_path: Path) -> None
     with pytest.raises(CloneFailed):
         asyncio.run(
             shallow_clone(
-                source_repo.as_uri(), "no-such-branch", tmp_path / "dest", allowed_protocols="file"
+                source_repo.as_uri(),
+                "no-such-branch",
+                tmp_path / "dest",
+                allowed_protocols="file",
             )
         )
 
@@ -87,9 +96,13 @@ def test_unknown_branch_fails_cleanly(source_repo: Path, tmp_path: Path) -> None
     "branch",
     ["", "--upload-pack=evil", "-x", "a..b", "bad name", "semi;colon", "x" * 300],
 )
-def test_unsafe_branch_names_are_rejected_before_running_git(branch: str, tmp_path: Path) -> None:
+def test_unsafe_branch_names_are_rejected_before_running_git(
+    branch: str, tmp_path: Path
+) -> None:
     with pytest.raises(CloneFailed):
-        asyncio.run(shallow_clone("https://github.com/o/r.git", branch, tmp_path / "dest"))
+        asyncio.run(
+            shallow_clone("https://github.com/o/r.git", branch, tmp_path / "dest")
+        )
 
 
 def test_slow_clone_times_out(source_repo: Path, tmp_path: Path) -> None:

@@ -13,7 +13,9 @@ _GITHUB_URL_PATTERN = re.compile(
     r"(?:[/?#].*)?"
 )
 
-_URL_HELP = "Enter a public GitHub repository URL, for example https://github.com/owner/repo."
+_URL_HELP = (
+    "Enter a public GitHub repository URL, for example https://github.com/owner/repo."
+)
 
 
 @dataclass(frozen=True)

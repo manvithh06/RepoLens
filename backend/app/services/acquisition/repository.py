@@ -39,7 +39,9 @@ async def acquired_repository(
 
 def summarize_scan(repo: AcquiredRepository) -> RepositoryScan:
     files = repo.filtered.files
-    extensions = Counter(os.path.splitext(kept.path)[1].lower() or "(none)" for kept in files)
+    extensions = Counter(
+        os.path.splitext(kept.path)[1].lower() or "(none)" for kept in files
+    )
     return RepositoryScan(
         repository=repo.info,
         file_count=len(files),

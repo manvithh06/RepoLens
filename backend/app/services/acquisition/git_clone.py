@@ -89,7 +89,9 @@ async def shallow_clone(
     if not _is_safe_branch(branch):
         raise CloneFailed("The repository's default branch name is not supported.")
     if _clone_slots.locked():
-        raise ServerBusy("RepoLens is busy with other repositories. Try again in a minute.")
+        raise ServerBusy(
+            "RepoLens is busy with other repositories. Try again in a minute."
+        )
 
     args = [
         "git",

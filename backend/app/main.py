@@ -19,7 +19,9 @@ logger = logging.getLogger(__name__)
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     settings = get_settings()
-    logger.info("Starting %s v%s (%s)", settings.app_name, __version__, settings.app_env)
+    logger.info(
+        "Starting %s v%s (%s)", settings.app_name, __version__, settings.app_env
+    )
 
     removed = cleanup_stale_workspaces(settings.workspace_dir, STALE_WORKSPACE_SECONDS)
     if removed:

@@ -45,7 +45,11 @@ def cleanup_stale_workspaces(base_dir: Path, max_age_seconds: float) -> int:
     cutoff = time.time() - max_age_seconds
     removed = 0
     for entry in base_dir.iterdir():
-        if not entry.name.startswith(WORKSPACE_PREFIX) or entry.is_symlink() or not entry.is_dir():
+        if (
+            not entry.name.startswith(WORKSPACE_PREFIX)
+            or entry.is_symlink()
+            or not entry.is_dir()
+        ):
             continue
         try:
             if entry.stat().st_mtime < cutoff:

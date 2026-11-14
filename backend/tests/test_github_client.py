@@ -38,7 +38,9 @@ def _transport(
     headers: dict[str, str] | None = None,
 ) -> httpx.MockTransport:
     def handler(request: httpx.Request) -> httpx.Response:
-        return httpx.Response(status, json=body if body is not None else {}, headers=headers)
+        return httpx.Response(
+            status, json=body if body is not None else {}, headers=headers
+        )
 
     return httpx.MockTransport(handler)
 
@@ -80,7 +82,9 @@ def test_error_statuses_map_to_app_errors(
 
 def test_private_repository_is_rejected() -> None:
     with pytest.raises(RepositoryNotFound):
-        asyncio.run(fetch_repo_info(REF, transport=_transport(200, _payload(private=True))))
+        asyncio.run(
+            fetch_repo_info(REF, transport=_transport(200, _payload(private=True)))
+        )
 
 
 def test_oversized_repository_is_rejected() -> None:
@@ -91,7 +95,9 @@ def test_oversized_repository_is_rejected() -> None:
 
 def test_unreadable_response_is_reported_as_unavailable() -> None:
     with pytest.raises(GitHubUnavailable):
-        asyncio.run(fetch_repo_info(REF, transport=_transport(200, {"unexpected": True})))
+        asyncio.run(
+            fetch_repo_info(REF, transport=_transport(200, {"unexpected": True}))
+        )
 
 
 def test_timeout_becomes_github_unavailable() -> None:

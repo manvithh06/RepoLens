@@ -163,7 +163,9 @@ def filter_repository(root: Path) -> FilterResult:
                 skipped["excluded_directory"] += 1
             else:
                 kept_dirs.append(name)
-        dirnames[:] = kept_dirs  # changing this list in place stops os.walk entering skipped folders
+        dirnames[:] = (
+            kept_dirs  # changing this list in place stops os.walk entering skipped folders
+        )
 
         for name in filenames:
             seen += 1

@@ -31,11 +31,15 @@ def _raise_for_status(response: httpx.Response) -> None:
     if _is_rate_limited(response):
         raise GitHubRateLimited("GitHub's rate limit was reached. Try again later.")
     if status in (301, 302, 307, 308):
-        raise RepositoryNotFound("This repository has moved or been renamed. Use its current URL.")
+        raise RepositoryNotFound(
+            "This repository has moved or been renamed. Use its current URL."
+        )
     if status in (403, 404, 451):
         raise RepositoryNotFound("Repository not found, or it is not public.")
     logger.warning("Unexpected GitHub API status: %s", status)
-    raise GitHubUnavailable("GitHub returned an unexpected response. Try again shortly.")
+    raise GitHubUnavailable(
+        "GitHub returned an unexpected response. Try again shortly."
+    )
 
 
 def _parse_repo_info(response: httpx.Response) -> tuple[RepositoryInfo, bool]:
@@ -79,7 +83,9 @@ async def fetch_repo_info(
         ) as client:
             response = await client.get(ref.api_url, headers=headers)
     except httpx.TimeoutException as exc:
-        raise GitHubUnavailable("GitHub took too long to respond. Try again shortly.") from exc
+        raise GitHubUnavailable(
+            "GitHub took too long to respond. Try again shortly."
+        ) from exc
     except httpx.HTTPError as exc:
         raise GitHubUnavailable("Could not reach GitHub. Try again shortly.") from exc
 

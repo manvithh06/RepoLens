@@ -32,7 +32,10 @@ def test_workspace_is_removed_even_when_the_work_fails(tmp_path: Path) -> None:
 
 
 def test_two_workspaces_never_share_a_folder(tmp_path: Path) -> None:
-    with temporary_workspace(tmp_path) as first, temporary_workspace(tmp_path) as second:
+    with (
+        temporary_workspace(tmp_path) as first,
+        temporary_workspace(tmp_path) as second,
+    ):
         assert first != second
 
 

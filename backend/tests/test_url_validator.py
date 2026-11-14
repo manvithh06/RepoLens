@@ -13,9 +13,17 @@ from app.services.acquisition.url_validator import parse_github_url
         ("github.com/octocat/hello-world", "octocat", "hello-world"),
         ("https://www.github.com/octocat/hello-world", "octocat", "hello-world"),
         ("  https://github.com/octocat/hello-world  ", "octocat", "hello-world"),
-        ("https://github.com/octocat/hello-world/tree/main/src", "octocat", "hello-world"),
+        (
+            "https://github.com/octocat/hello-world/tree/main/src",
+            "octocat",
+            "hello-world",
+        ),
         ("https://github.com/octocat/hello-world?tab=readme", "octocat", "hello-world"),
-        ("https://github.com/octocat/octocat.github.io", "octocat", "octocat.github.io"),
+        (
+            "https://github.com/octocat/octocat.github.io",
+            "octocat",
+            "octocat.github.io",
+        ),
     ],
 )
 def test_accepts_valid_urls(raw: str, owner: str, name: str) -> None:

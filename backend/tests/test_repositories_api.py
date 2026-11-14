@@ -66,7 +66,9 @@ def test_scan_returns_a_summary_and_leaves_no_files_behind(
 def test_scan_rejects_a_bad_url_before_doing_any_work(
     client: TestClient, workspace: Path
 ) -> None:
-    response = client.post("/api/repositories/scan", json={"url": "https://evil.com/a/b"})
+    response = client.post(
+        "/api/repositories/scan", json={"url": "https://evil.com/a/b"}
+    )
 
     assert response.status_code == 400
     assert response.json()["error"]["code"] == "invalid_repository_url"

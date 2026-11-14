@@ -19,7 +19,9 @@ INFO = RepositoryInfo(
 )
 
 
-async def _fake_clone(url: str, branch: str, destination: Path, **kwargs: object) -> None:
+async def _fake_clone(
+    url: str, branch: str, destination: Path, **kwargs: object
+) -> None:
     (destination / "src").mkdir(parents=True)
     (destination / "src" / "app.py").write_text("print('hi')\n")
     (destination / "README.md").write_text("# demo\n")

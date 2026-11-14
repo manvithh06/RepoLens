@@ -64,7 +64,10 @@ def test_empty_repository() -> None:
 
 
 def test_percentages_add_up_to_about_100() -> None:
-    files = [KeptFile(path=f"f{i}{ext}", size=333) for i, ext in enumerate([".py", ".go", ".rs"])]
+    files = [
+        KeptFile(path=f"f{i}{ext}", size=333)
+        for i, ext in enumerate([".py", ".go", ".rs"])
+    ]
 
     total = sum(stat.percent for stat in detect_languages(files).code)
 

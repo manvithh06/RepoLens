@@ -30,18 +30,24 @@ def _error_response(
     details: list[dict[str, Any]] | None = None,
 ) -> JSONResponse:
     body = ErrorResponse(error=ErrorBody(code=code, message=message, details=details))
-    return JSONResponse(status_code=status_code, content=body.model_dump(exclude_none=True))
+    return JSONResponse(
+        status_code=status_code, content=body.model_dump(exclude_none=True)
+    )
 
 
 async def handle_app_error(request: Request, exc: AppError) -> JSONResponse:
     return _error_response(exc.status_code, exc.code, exc.message)
 
 
-async def handle_http_exception(request: Request, exc: StarletteHTTPException) -> JSONResponse:
+async def handle_http_exception(
+    request: Request, exc: StarletteHTTPException
+) -> JSONResponse:
     return _error_response(exc.status_code, "http_error", str(exc.detail))
 
 
-async def handle_validation_error(request: Request, exc: RequestValidationError) -> JSONResponse:
+async def handle_validation_error(
+    request: Request, exc: RequestValidationError
+) -> JSONResponse:
     return _error_response(
         422,
         "validation_error",
