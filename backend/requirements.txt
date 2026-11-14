@@ -1,0 +1,29 @@
+# Web framework and server
+fastapi
+uvicorn[standard]
+pydantic-settings
+
+# Phase 3: GitHub API and repo acquisition
+httpx
+
+# Phase 4: code parsing
+tree-sitter
+tree-sitter-python
+tree-sitter-javascript
+tree-sitter-typescript
+
+# Phase 5: dependency graph
+networkx
+
+# Phase 6: Hugging Face LLM access
+huggingface_hub
+
+# Phase 7: embeddings, vector search, keyword search
+sentence-transformers
+faiss-cpu
+rank-bm25
+
+# Phase 11: database
+sqlalchemy
+alembic
+psycopg[binary]

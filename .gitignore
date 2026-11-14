@@ -1,0 +1,33 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.coverage
+htmlcov/
+
+# Environment files (secrets live here)
+.env
+.env.*
+!.env.example
+
+# Node / frontend
+node_modules/
+frontend/dist/
+*.tsbuildinfo
+
+# RepoLens runtime data (cloned repos, indexes, local databases)
+backend/workspace/
+backend/data/
+
+# Logs
+*.log
+
+# Editors and OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
