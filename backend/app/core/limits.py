@@ -13,3 +13,8 @@ MAX_CONCURRENT_CLONES = 2
 
 # Workspaces older than this are leftovers from a crash and get deleted at startup.
 STALE_WORKSPACE_SECONDS = 60 * 60
+
+# Limits on the files we keep for analysis.
+MAX_FILE_SIZE_BYTES = 300_000  # larger files are skipped
+MAX_FILE_COUNT = 5_000  # if there are more, the shallowest files are kept
+MAX_WALK_ENTRIES = 50_000  # stop walking after this many folders and files

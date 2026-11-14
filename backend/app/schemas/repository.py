@@ -14,3 +14,13 @@ class RepositoryInfo(BaseModel):
     default_branch: str
     primary_language: str | None = None
     size_kb: int
+
+
+class RepositoryScan(BaseModel):
+    repository: RepositoryInfo
+    file_count: int
+    total_bytes: int
+    truncated: bool
+    skipped: dict[str, int]
+    extensions: dict[str, int]
+    sample_paths: list[str]
