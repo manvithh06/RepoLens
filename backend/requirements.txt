@@ -6,22 +6,19 @@ pydantic-settings
 # Phase 3: GitHub API and repo acquisition
 httpx
 
-# Phase 4: code parsing
-tree-sitter
-tree-sitter-python
-tree-sitter-javascript
-tree-sitter-typescript
-
-# Phase 5: dependency graph
-networkx
+# Phases 4 and 5: analysis uses only the standard library (ast, tomllib, re)
 
 # Phase 6: Hugging Face LLM access
 huggingface_hub
 
-# Phase 7: embeddings, vector search, keyword search
-sentence-transformers
-faiss-cpu
+# Phase 7: keyword search for repository chat. Embeddings (sentence-transformers and
+# FAISS) are left out on purpose: they pull in PyTorch and would add minutes of CPU
+# work to every analysis.
 rank-bm25
+
+# Development
+pytest
+ruff
 
 # Phase 11: database
 sqlalchemy

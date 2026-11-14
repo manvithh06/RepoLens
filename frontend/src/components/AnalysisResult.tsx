@@ -9,6 +9,7 @@ import { GuidedTour } from './analysis/GuidedTour'
 import { Improvements } from './analysis/Improvements'
 import { Overview } from './analysis/Overview'
 import { Packages } from './analysis/Packages'
+import { RepoChat } from './analysis/RepoChat'
 import { Stack } from './analysis/Stack'
 import { BarList, Panel } from './ui'
 
@@ -19,6 +20,7 @@ const SECTIONS = [
   ['entry-points', 'Entry points'],
   ['architecture', 'Architecture'],
   ['improvements', 'Improvements'],
+  ['chat', 'Ask'],
   ['structure', 'Structure'],
   ['packages', 'Packages'],
   ['files', 'Files'],
@@ -68,6 +70,7 @@ export function AnalysisResult({ analysis }: { analysis: RepositoryAnalysis }) {
         <EntryPoints entries={analysis.entry_points} index={number('entry-points')} />
         <Architecture architecture={analysis.architecture} graph={analysis.graph} index={number('architecture')} />
         <Improvements findings={analysis.improvements} index={number('improvements')} />
+        <RepoChat analysisId={analysis.analysis_id} index={number('chat')} />
         <div className="grid items-start gap-8 lg:grid-cols-2">
           <FileTree tree={analysis.tree} entryPaths={entryPaths} index={number('structure')} />
           <Packages

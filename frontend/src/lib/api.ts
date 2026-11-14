@@ -1,4 +1,11 @@
-import type { ApiErrorBody, RepositoryAnalysis, RepositoryScan, Tour } from '../types/api'
+import type {
+  ApiErrorBody,
+  ChatAnswer,
+  ChatTurn,
+  RepositoryAnalysis,
+  RepositoryScan,
+  Tour,
+} from '../types/api'
 
 const API_BASE_URL: string = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8000'
 
@@ -52,4 +59,15 @@ export function analyzeRepository(url: string): Promise<RepositoryAnalysis> {
 
 export function fetchTour(analysisId: string): Promise<Tour> {
   return postJson<Tour>(`/api/repositories/${encodeURIComponent(analysisId)}/tour`, {})
+}
+
+export function askRepository(
+  analysisId: string,
+  question: string,
+  history: ChatTurn[],
+): Promise<ChatAnswer> {
+  return postJson<ChatAnswer>(`/api/repositories/${encodeURIComponent(analysisId)}/chat`, {
+    question,
+    history,
+  })
 }

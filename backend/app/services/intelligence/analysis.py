@@ -5,6 +5,8 @@ from dataclasses import dataclass
 
 from app.schemas.analysis import RepositoryAnalysis
 from app.services.acquisition.repository import AcquiredRepository, summarize_scan
+from app.services.chat.chunks import build_chunks
+from app.services.chat.index import ChatIndex
 from app.services.intelligence.entry_points import find_entry_points
 from app.services.intelligence.frameworks import detect_frameworks
 from app.services.intelligence.graph import build_architecture, build_import_graph
@@ -71,5 +73,6 @@ def analyze_repository(repo: AcquiredRepository) -> AnalysisBundle:
         commit=repo.commit,
         line_counts=_line_counts(reader),
         tour_material=build_tour_material(analysis, reader),
+        chat_index=ChatIndex(build_chunks(reader)),
     )
     return AnalysisBundle(analysis=analysis, stored=stored)

@@ -49,3 +49,16 @@ LLM_MAX_TOKENS_FOLDER = 1_000
 LLM_MAX_TOKENS_REPO = 3_000
 TOUR_CACHE_SECONDS = 6 * 60 * 60
 MAX_CACHED_TOURS = 50
+
+# Repository chat (BM25 retrieval over chunks kept in memory).
+MAX_STORED_TOTAL_BYTES = 200 * 1024 * 1024  # all stored analyses together
+CHUNK_WINDOW_LINES = 60
+CHUNK_OVERLAP_LINES = 10
+MAX_CHUNK_LINES = 120  # longer functions and classes are split into windows
+MAX_CHUNKS_PER_FILE = 40
+MAX_CHAT_CHUNKS = 8_000
+CHAT_TOP_K = 8
+CHAT_MIN_SCORE = 1.0  # below this BM25 score nothing relevant was found
+LLM_MAX_TOKENS_CHAT = 2_000
+MAX_CHAT_QUESTION_CHARS = 1_000
+MAX_CHAT_HISTORY = 6

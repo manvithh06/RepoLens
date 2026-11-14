@@ -58,7 +58,7 @@ MAX_START_HERE = 5
 _DATA_CLOSE = re.compile(r"</\s*repository_data", re.IGNORECASE)
 
 
-def _data(block: str) -> str:
+def wrap_data(block: str) -> str:
     """Wrap repository text so it cannot close the data tag early."""
     return f"<repository_data>\n{_DATA_CLOSE.sub('</repository-data', block)}\n</repository_data>"
 
@@ -130,7 +130,7 @@ async def summarize_file(client: LLMClient, excerpt: FileExcerpt) -> dict[str, A
         '"key_lines": [{"line": 12, "what": "what happens there"}]}\n'
         "Give at most 3 key_lines, using line numbers from the excerpt.\n\n"
         f"File: {excerpt.path}{note}\nPicked because: {excerpt.reason}\n"
-        + _data(excerpt.text)
+        + wrap_data(excerpt.text)
     )
     return await _ask(client, user, LLM_MAX_TOKENS_FILE)
 
@@ -151,7 +151,9 @@ async def summarize_folder(
         'Shape: {"summary": "2 sentences", "files": ["paths of its most important '
         'files"]}\n\n'
         f"Folder: {folder}\n"
-        + _data(f"Files in the folder:\n{chr(10).join(listing)}\n\nSummaries:\n{known}")
+        + wrap_data(
+            f"Files in the folder:\n{chr(10).join(listing)}\n\nSummaries:\n{known}"
+        )
     )
     return await _ask(client, user, LLM_MAX_TOKENS_FOLDER)
 
@@ -192,7 +194,7 @@ async def write_repo_tour(
         f"how_it_works: 3 to 7 steps that follow a request or the data through the "
         f"code, in order. modules: at most {MAX_MODULES}. start_here: 2 to "
         f"{MAX_START_HERE} files in reading order. Every item must cite at least one "
-        "path that appears in the data.\n\n" + _data(facts)
+        "path that appears in the data.\n\n" + wrap_data(facts)
     )
     return await _ask(client, user, LLM_MAX_TOKENS_REPO)
 

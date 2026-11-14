@@ -7,7 +7,11 @@ from dataclasses import dataclass, field
 from typing import Any
 
 from app.core.errors import AppError
-from app.core.limits import ANALYSIS_TTL_SECONDS, MAX_STORED_ANALYSES
+from app.core.limits import (
+    ANALYSIS_TTL_SECONDS,
+    MAX_STORED_ANALYSES,
+    MAX_STORED_TOTAL_BYTES,
+)
 
 
 class AnalysisNotFound(AppError):
@@ -27,6 +31,15 @@ class StoredAnalysis:
     chat_index: Any = None  # app.services.chat.index.ChatIndex
     created: float = field(default_factory=time.monotonic)
 
+    @property
+    def size_bytes(self) -> int:
+        size = sum(len(p) + 8 for p in self.line_counts)
+        if self.chat_index is not None:
+            size += self.chat_index.size_bytes
+        if self.tour_material is not None:
+            size += sum(len(f.text) for f in self.tour_material.files)
+        return size
+
     def has_file(self, path: str) -> bool:
         return path in self.line_counts
 
@@ -37,10 +50,14 @@ class StoredAnalysis:
 
 class AnalysisStore:
     def __init__(
-        self, ttl: float = ANALYSIS_TTL_SECONDS, max_entries: int = MAX_STORED_ANALYSES
+        self,
+        ttl: float = ANALYSIS_TTL_SECONDS,
+        max_entries: int = MAX_STORED_ANALYSES,
+        max_bytes: int = MAX_STORED_TOTAL_BYTES,
     ) -> None:
         self._ttl = ttl
         self._max_entries = max_entries
+        self._max_bytes = max_bytes
         self._items: OrderedDict[str, StoredAnalysis] = OrderedDict()
         self._lock = threading.Lock()
 
@@ -54,7 +71,10 @@ class AnalysisStore:
             self._expire()
             self._items[item.analysis_id] = item
             self._items.move_to_end(item.analysis_id)
-            while len(self._items) > self._max_entries:
+            while len(self._items) > self._max_entries or (
+                len(self._items) > 1
+                and sum(v.size_bytes for v in self._items.values()) > self._max_bytes
+            ):
                 self._items.popitem(last=False)
 
     def get(self, analysis_id: str) -> StoredAnalysis:

@@ -199,3 +199,26 @@ export interface Tour {
   dropped_claims: number
   cached: boolean
 }
+
+export interface ChatCitation {
+  id: string
+  path: string
+  start_line: number
+  end_line: number
+  symbol: string | null
+  snippet: string
+}
+
+export interface ChatAnswer {
+  answerable: boolean
+  answer: string
+  citations: ChatCitation[]
+  related: ChatCitation[]
+  model: string | null
+  retrieval: string
+}
+
+export interface ChatTurn {
+  role: 'user' | 'assistant'
+  content: string
+}
