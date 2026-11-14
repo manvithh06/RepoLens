@@ -1,10 +1,13 @@
 import { useMutation } from '@tanstack/react-query'
 import { ArrowRight, LoaderCircle } from 'lucide-react'
-import { useState, type FormEvent } from 'react'
+import { lazy, Suspense, useState, type FormEvent } from 'react'
 import { LayerStack } from '../components/LayerStack'
-import { ScanResult } from '../components/ScanResult'
 import { useDocumentTitle } from '../hooks/useDocumentTitle'
-import { scanRepository } from '../lib/api'
+import { analyzeRepository } from '../lib/api'
+
+const AnalysisResult = lazy(() =>
+  import('../components/AnalysisResult').then((module) => ({ default: module.AnalysisResult })),
+)
 
 const STEPS = [
   {
@@ -19,12 +22,16 @@ const STEPS = [
     title: 'Filter',
     text: 'Dependencies, binaries, lock files, generated code and symlinks are dropped. Everything else is kept and counted.',
   },
+  {
+    title: 'Analyse',
+    text: 'Manifests, imports and entry points are read as text, never run, and turned into a map of the codebase.',
+  },
 ]
 
 export function Home() {
   useDocumentTitle('RepoLens')
   const [url, setUrl] = useState('')
-  const scan = useMutation({ mutationFn: scanRepository })
+  const scan = useMutation({ mutationFn: analyzeRepository })
 
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
@@ -85,7 +92,7 @@ export function Home() {
                     aria-hidden="true"
                   />
                 ) : null}
-                {scan.isPending ? 'Scanning' : 'Scan repository'}
+                {scan.isPending ? 'Analysing' : 'Analyse repository'}
                 {scan.isPending ? null : (
                   <ArrowRight
                     size={16}
@@ -100,7 +107,7 @@ export function Home() {
           <div aria-live="polite" className="mt-4 min-h-6 text-sm">
             {scan.isPending && (
               <p className="text-ink-soft">
-                Downloading and filtering. Large repositories can take up to two minutes.
+                Downloading, filtering and analysing. Large repositories can take up to two minutes.
               </p>
             )}
             {scan.isError && (
@@ -114,15 +121,17 @@ export function Home() {
           </div>
         </div>
 
-        <LayerStack scan={scan.isSuccess ? scan.data : null} scanning={scan.isPending} />
+        <LayerStack scan={scan.isSuccess ? scan.data.scan : null} scanning={scan.isPending} />
       </section>
 
       {scan.isSuccess ? (
-        <ScanResult scan={scan.data} />
+        <Suspense fallback={<p className="text-sm text-ink-soft">Preparing the report.</p>}>
+          <AnalysisResult analysis={scan.data} />
+        </Suspense>
       ) : (
         <section aria-label="How a scan works" className="border-t-[1.5px] border-ink pt-10">
           <p className="kicker mb-8">How a scan works</p>
-          <ol className="grid gap-10 md:grid-cols-3">
+          <ol className="grid gap-10 sm:grid-cols-2 lg:grid-cols-4">
             {STEPS.map((step, index) => (
               <li key={step.title}>
                 <p className="font-display text-6xl leading-none text-signal">{index + 1}</p>

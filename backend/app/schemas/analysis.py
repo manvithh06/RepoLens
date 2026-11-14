@@ -65,9 +65,13 @@ class EntryPoint(BaseModel):
     detail: str  # what was found, such as "app = FastAPI()"
 
 
+ModuleKind = Literal["source", "test", "example"]
+
+
 class GraphNode(BaseModel):
     id: str  # repository-relative path
     language: str | None
+    kind: ModuleKind
     size: int
     imports: int  # local files this file imports
     imported_by: int  # local files that import this file
@@ -100,9 +104,6 @@ class ImportGraph(BaseModel):
     external_packages: list[ExternalPackage]
     parse_errors: int
     unresolved_imports: int
-
-
-ModuleKind = Literal["source", "test", "example"]
 
 
 class ArchitectureModule(BaseModel):

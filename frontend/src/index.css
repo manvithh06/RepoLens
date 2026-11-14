@@ -21,6 +21,15 @@
   --danger-bg: #fbe4e1;
   --danger-border: #b3261e;
   --danger-text: #7a1a14;
+  /* Categorical colours for charts (languages). No purples. */
+  --cat-1: #1f7a55;
+  --cat-2: #c2560c;
+  --cat-3: #2563a8;
+  --cat-4: #b7791f;
+  --cat-5: #0f766e;
+  --cat-6: #7c6f2a;
+  --cat-7: #4b5a6e;
+  --cat-8: #a1503a;
 }
 
 :root[data-theme="dark"] {
@@ -43,6 +52,14 @@
   --danger-bg: #2d1412;
   --danger-border: #d9534a;
   --danger-text: #f2aaa4;
+  --cat-1: #56d79b;
+  --cat-2: #f0884f;
+  --cat-3: #6aa6e8;
+  --cat-4: #e0b04a;
+  --cat-5: #4fc4b8;
+  --cat-6: #c4b55a;
+  --cat-7: #9aa8ba;
+  --cat-8: #e08a6f;
 }
 
 @theme inline {
@@ -164,6 +181,70 @@
   animation-delay: calc(var(--d, 0) * 90ms);
 }
 
+.lang-bar {
+  display: flex;
+  height: 14px;
+  border: 1.5px solid var(--ink);
+  background: var(--paper-deep);
+  overflow: hidden;
+}
+.lang-bar > span {
+  height: 100%;
+  transform-origin: left;
+  animation: bar-grow 700ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation-delay: 200ms;
+}
+.lang-bar > span + span {
+  border-left: 1.5px solid var(--surface);
+}
+
+/* ---------- Architecture graph (React Flow) ---------- */
+.graph-canvas .react-flow {
+  --xy-background-color: var(--surface);
+  --xy-background-pattern-color: var(--grid);
+  --xy-edge-stroke: var(--ink-faint);
+  --xy-edge-stroke-selected: var(--signal);
+  --xy-controls-button-background-color: var(--surface);
+  --xy-controls-button-background-color-hover: var(--paper-deep);
+  --xy-controls-button-color: var(--ink);
+  --xy-controls-button-color-hover: var(--ink);
+  --xy-controls-button-border-color: var(--line);
+  --xy-controls-box-shadow: 3px 3px 0 0 var(--shadow-solid);
+  --xy-attribution-background-color: transparent;
+  --xy-node-boxshadow-selected: none;
+  color: var(--ink);
+}
+.graph-canvas .react-flow__controls {
+  border: 1.5px solid var(--ink);
+}
+.graph-canvas .react-flow__attribution a {
+  color: var(--ink-faint);
+}
+.graph-node {
+  width: 100%;
+  height: 100%;
+  border: 1.5px solid var(--ink);
+  background: var(--surface);
+  box-shadow: 3px 3px 0 0 var(--shadow-solid);
+  transition: opacity 150ms, box-shadow 150ms;
+}
+.graph-node--test,
+.graph-node--example {
+  border-style: dashed;
+  background: var(--paper);
+}
+.graph-node--selected {
+  box-shadow: 3px 3px 0 0 var(--signal);
+  border-color: var(--signal);
+}
+.graph-node--dim {
+  opacity: 0.35;
+}
+.graph-canvas .react-flow__handle {
+  opacity: 0;
+  pointer-events: none;
+}
+
 /* ---------- Layer stack (3D) ---------- */
 .stack-scene {
   perspective: 1200px;
@@ -278,7 +359,11 @@
   .slab,
   .scan-plane,
   .reveal,
-  .bar-fill {
+  .bar-fill,
+  .lang-bar > span {
     animation: none;
+  }
+  .graph-node {
+    transition: none;
   }
 }

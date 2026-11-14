@@ -23,7 +23,7 @@ from app.schemas.analysis import (
 )
 from app.services.intelligence.imports import ImportResult
 from app.services.intelligence.languages import language_of
-from app.services.intelligence.paths import folder_kind
+from app.services.intelligence.paths import folder_kind, path_kind
 from app.services.intelligence.reader import RepoReader
 
 ROOT_GROUP = "(root)"
@@ -138,6 +138,7 @@ def build_import_graph(reader: RepoReader, imports: ImportResult) -> ImportGraph
         GraphNode(
             id=path,
             language=language_of(path),
+            kind=path_kind(path),
             size=reader.size(path),
             imports=len(adjacency.get(path, [])),
             imported_by=in_degree[path],

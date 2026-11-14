@@ -1,4 +1,4 @@
-import type { ApiErrorBody, RepositoryScan } from '../types/api'
+import type { ApiErrorBody, RepositoryAnalysis, RepositoryScan } from '../types/api'
 
 const API_BASE_URL: string = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8000'
 
@@ -44,4 +44,8 @@ async function postJson<T>(path: string, body: unknown): Promise<T> {
 
 export function scanRepository(url: string): Promise<RepositoryScan> {
   return postJson<RepositoryScan>('/api/repositories/scan', { url })
+}
+
+export function analyzeRepository(url: string): Promise<RepositoryAnalysis> {
+  return postJson<RepositoryAnalysis>('/api/repositories/analyze', { url })
 }
