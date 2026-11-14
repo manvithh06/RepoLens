@@ -1,3 +1,4 @@
+import json
 from collections.abc import Iterator
 from pathlib import Path
 
@@ -109,3 +110,66 @@ def test_analyze_returns_the_full_analysis_and_cleans_up(
     assert [n["id"] for n in body["graph"]["nodes"]] == ["src/app.py"]
     assert body["architecture"]["modules"][0]["id"] == "src"
     assert list(workspace.iterdir()) == []
+
+
+def test_analyze_stream_reports_real_stages_then_the_result(
+    client: TestClient, workspace: Path
+) -> None:
+    response = client.post(
+        "/api/repositories/analyze/stream",
+        json={"url": "https://github.com/octocat/hello-world"},
+    )
+
+    assert response.status_code == 200
+    assert response.headers["content-type"].startswith("application/x-ndjson")
+    lines = [json.loads(line) for line in response.text.splitlines()]
+    assert [line.get("stage") for line in lines[:3]] == [
+        "checking",
+        "cloning",
+        "analysing",
+    ]
+    assert lines[3]["result"]["scan"]["file_count"] == 2
+    assert list(workspace.iterdir()) == []
+
+
+def test_analyze_stream_sends_errors_as_a_line(
+    client: TestClient, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    async def failing_clone(url: str, branch: str, destination: Path) -> None:
+        raise CloneFailed("Could not download the repository.")
+
+    monkeypatch.setattr(repository_module, "shallow_clone", failing_clone)
+    response = client.post(
+        "/api/repositories/analyze/stream",
+        json={"url": "https://github.com/octocat/hello-world"},
+    )
+
+    lines = [json.loads(line) for line in response.text.splitlines()]
+    assert lines[-1] == {
+        "error": {
+            "code": "clone_failed",
+            "message": "Could not download the repository.",
+        }
+    }
+
+
+def test_analyze_stream_rejects_bad_urls_before_streaming(client: TestClient) -> None:
+    response = client.post(
+        "/api/repositories/analyze/stream", json={"url": "https://evil.com/a/b"}
+    )
+    assert response.status_code == 400
+    assert response.json()["error"]["code"] == "invalid_repository_url"
+
+
+def test_expensive_endpoints_are_rate_limited_per_ip(client: TestClient) -> None:
+    url = {"url": "https://github.com/octocat/hello-world"}
+    codes = [
+        client.post("/api/repositories/analyze", json=url).status_code
+        for _ in range(11)
+    ]
+    assert codes[:10] == [200] * 10
+    assert codes[10] == 429
+    blocked = client.post("/api/repositories/analyze/stream", json=url)
+    assert blocked.status_code == 429
+    assert blocked.json()["error"]["code"] == "rate_limited"
+    assert "Try again in" in blocked.json()["error"]["message"]

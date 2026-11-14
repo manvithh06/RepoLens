@@ -9,10 +9,11 @@ import {
   type Edge,
   type Node,
   type NodeProps,
+  type ReactFlowInstance,
 } from '@xyflow/react'
 import '@xyflow/react/dist/style.css'
 import { TriangleAlert } from 'lucide-react'
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { formatBytes, formatCount, splitPath } from '../../lib/format'
 import type { ArchitectureGraph, Cycle, ImportGraph, ModuleKind } from '../../types/api'
 import { Checkbox, EmptyState, Notice, Panel, SourceLink, Toggle } from '../ui'
@@ -214,6 +215,7 @@ export function Architecture({
   const [mode, setMode] = useState<Mode>('folders')
   const [showAll, setShowAll] = useState(false)
   const [selected, setSelected] = useState<string | null>(null)
+  const [flow, setFlow] = useState<ReactFlowInstance<ModuleNode, Edge> | null>(null)
 
   const view = useMemo(() => {
     const { items, links } = buildItems(mode, architecture, graph)
@@ -247,6 +249,13 @@ export function Architecture({
     }
     return set
   }, [active, view.links])
+
+  // Bring the selection and its neighbours into view; without a selection, show everything.
+  useEffect(() => {
+    if (!flow) return
+    const ids = neighbours ? [...neighbours].map((id) => ({ id })) : undefined
+    void flow.fitView({ nodes: ids, padding: 0.2, maxZoom: 1, duration: 0 })
+  }, [flow, neighbours])
 
   const nodes: ModuleNode[] = view.items.map((item) => ({
     id: item.id,
@@ -335,7 +344,7 @@ export function Architecture({
             </EmptyState>
           ) : (
             <div className="graph-canvas h-[440px] w-full overflow-hidden border-[1.5px] border-ink sm:h-[540px]">
-              <ReactFlow
+              <ReactFlow<ModuleNode, Edge>
                 key={`${mode}-${showAll}`}
                 nodes={nodes}
                 edges={edges}
@@ -348,6 +357,7 @@ export function Architecture({
                 nodesConnectable={false}
                 zoomOnScroll={false}
                 preventScrolling={false}
+                onInit={setFlow}
                 onNodeClick={(_, node) => setSelected(node.id === active ? null : node.id)}
                 onPaneClick={() => setSelected(null)}
               >
@@ -373,6 +383,9 @@ export function Architecture({
           )}
 
           <ul className="mt-4 space-y-1 text-xs text-ink-soft">
+            {view.items.length > 1 && view.links.length === 0 && (
+              <li>No imports cross between the {mode === 'folders' ? 'folders' : 'files'} shown here.</li>
+            )}
             {mode === 'folders' && architecture.depth > 0 && (
               <li>Folders are grouped {formatCount(architecture.depth, 'level')} deep. Line weight shows how many imports cross between two folders.</li>
             )}

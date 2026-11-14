@@ -24,13 +24,16 @@ export function Terms() {
       <h2 className="pt-2 text-base font-semibold">Limits</h2>
       <p>
         To keep the service available, we limit repository size, file counts, processing time and
-        the number of simultaneous requests. Requests that exceed these limits may be rejected.
+        the number of simultaneous requests, and how many analyses, tours and chat questions one
+        address can request in a period. Requests that exceed these limits may be rejected.
       </p>
 
       <h2 className="pt-2 text-base font-semibold">No warranty</h2>
       <p>
         The service is provided as is, without warranties of any kind. Results can be incomplete
-        or wrong, and you should verify anything important against the repository itself. To the
+        or wrong. The guided tour and chat answers are written by a language model: RepoLens checks
+        that every file it cites exists, but the explanation itself can still be mistaken. Verify
+        anything important against the repository itself. To the
         extent permitted by law, we are not liable for losses arising from use of the service.
       </p>
 

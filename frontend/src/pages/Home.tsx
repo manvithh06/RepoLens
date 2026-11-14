@@ -1,9 +1,9 @@
 import { useMutation } from '@tanstack/react-query'
-import { ArrowRight, LoaderCircle } from 'lucide-react'
+import { ArrowRight, Check, LoaderCircle } from 'lucide-react'
 import { lazy, Suspense, useState, type FormEvent } from 'react'
 import { LayerStack } from '../components/LayerStack'
 import { useDocumentTitle } from '../hooks/useDocumentTitle'
-import { analyzeRepository } from '../lib/api'
+import { analyzeRepositoryStream, type AnalysisStage } from '../lib/api'
 
 const AnalysisResult = lazy(() =>
   import('../components/AnalysisResult').then((module) => ({ default: module.AnalysisResult })),
@@ -15,23 +15,63 @@ const STEPS = [
     text: 'The repository is looked up on the GitHub API. Private or oversized repositories are rejected before anything is downloaded.',
   },
   {
-    title: 'Clone',
-    text: 'A shallow copy of the default branch goes into a temporary folder that is deleted when the scan ends.',
-  },
-  {
-    title: 'Filter',
-    text: 'Dependencies, binaries, lock files, generated code and symlinks are dropped. Everything else is kept and counted.',
+    title: 'Clone and filter',
+    text: 'A shallow copy goes into a temporary folder. Dependencies, binaries, lock files and generated code are dropped, and the folder is deleted when the analysis ends.',
   },
   {
     title: 'Analyse',
-    text: 'Manifests, imports and entry points are read as text, never run, and turned into a map of the codebase.',
+    text: 'Manifests, imports and entry points are read as text, never run, and turned into a map of the codebase and a ranked list of improvements.',
+  },
+  {
+    title: 'Explain',
+    text: 'A language model reads the key files and writes a guided tour. Every file it cites is checked against the repository before you see it.',
   },
 ]
+
+const STAGES: { id: AnalysisStage; label: string }[] = [
+  { id: 'checking', label: 'Checking the repository on GitHub' },
+  { id: 'cloning', label: 'Downloading and filtering files' },
+  { id: 'analysing', label: 'Analysing structure, imports and risks' },
+]
+
+function StageList({ current }: { current: AnalysisStage | null }) {
+  const reached = current ? STAGES.findIndex((stage) => stage.id === current) : -1
+  return (
+    <ol className="space-y-1.5 text-sm" aria-label="Progress">
+      {STAGES.map((stage, position) => {
+        const state = position < reached ? 'done' : position === reached ? 'active' : 'waiting'
+        return (
+          <li
+            key={stage.id}
+            className={`flex items-center gap-2.5 ${state === 'waiting' ? 'text-ink-faint' : 'text-ink'}`}
+            aria-current={state === 'active' ? 'step' : undefined}
+          >
+            <span className="inline-flex size-4 items-center justify-center" aria-hidden="true">
+              {state === 'done' && <Check size={14} className="text-signal" />}
+              {state === 'active' && (
+                <LoaderCircle size={14} className="animate-spin text-signal motion-reduce:animate-none" />
+              )}
+              {state === 'waiting' && <span className="size-1.5 bg-line" />}
+            </span>
+            {stage.label}
+            <span className="sr-only">{state === 'done' ? ' (done)' : state === 'active' ? ' (in progress)' : ''}</span>
+          </li>
+        )
+      })}
+    </ol>
+  )
+}
 
 export function Home() {
   useDocumentTitle('RepoLens')
   const [url, setUrl] = useState('')
-  const scan = useMutation({ mutationFn: analyzeRepository })
+  const [stage, setStage] = useState<AnalysisStage | null>(null)
+  const scan = useMutation({
+    mutationFn: (target: string) => {
+      setStage(null)
+      return analyzeRepositoryStream(target, setStage)
+    },
+  })
 
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
@@ -45,7 +85,7 @@ export function Home() {
         <div>
           <p className="kicker reveal mb-6 flex items-center gap-3">
             <span className="h-px w-8 bg-signal" aria-hidden="true" />
-            Repository scanner
+            Codebase guide
           </p>
           <h1
             className="reveal font-display text-[3.4rem] leading-[0.95] tracking-[-0.01em] text-ink sm:text-[5.2rem]"
@@ -57,8 +97,8 @@ export function Home() {
             className="reveal mt-7 max-w-lg text-lg leading-relaxed text-ink-soft"
             style={{ ['--d' as string]: 2 }}
           >
-            Paste a public GitHub URL. RepoLens pulls a temporary copy, strips out the noise, and
-            shows you the layers it kept and skipped.
+            Paste a GitHub link, get a guided tour of the codebase and a to-do list to make it
+            better. Every claim links to the file and line it came from.
           </p>
 
           <form
@@ -105,11 +145,7 @@ export function Home() {
           </form>
 
           <div aria-live="polite" className="mt-4 min-h-6 text-sm">
-            {scan.isPending && (
-              <p className="text-ink-soft">
-                Downloading, filtering and analysing. Large repositories can take up to two minutes.
-              </p>
-            )}
+            {scan.isPending && <StageList current={stage} />}
             {scan.isError && (
               <div
                 role="alert"
@@ -129,8 +165,8 @@ export function Home() {
           <AnalysisResult analysis={scan.data} />
         </Suspense>
       ) : (
-        <section aria-label="How a scan works" className="border-t-[1.5px] border-ink pt-10">
-          <p className="kicker mb-8">How a scan works</p>
+        <section aria-label="How it works" className="border-t-[1.5px] border-ink pt-10">
+          <p className="kicker mb-8">How it works</p>
           <ol className="grid gap-10 sm:grid-cols-2 lg:grid-cols-4">
             {STEPS.map((step, index) => (
               <li key={step.title}>

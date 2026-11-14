@@ -62,3 +62,8 @@ CHAT_MIN_SCORE = 1.0  # below this BM25 score nothing relevant was found
 LLM_MAX_TOKENS_CHAT = 2_000
 MAX_CHAT_QUESTION_CHARS = 1_000
 MAX_CHAT_HISTORY = 6
+
+# Per-IP rate limits on the expensive endpoints: (requests, window in seconds).
+RATE_LIMIT_ANALYZE = (10, 10 * 60)
+RATE_LIMIT_TOUR = (10, 10 * 60)
+RATE_LIMIT_CHAT = (40, 10 * 60)

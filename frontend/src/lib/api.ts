@@ -21,7 +21,7 @@ export class ApiError extends Error {
   }
 }
 
-async function postJson<T>(path: string, body: unknown): Promise<T> {
+async function send(path: string, body: unknown): Promise<Response> {
   let response: Response
   try {
     response = await fetch(`${API_BASE_URL}${path}`, {
@@ -45,8 +45,47 @@ async function postJson<T>(path: string, body: unknown): Promise<T> {
       payload?.error?.message ?? `The request failed with status ${response.status}.`,
     )
   }
+  return response
+}
 
+async function postJson<T>(path: string, body: unknown): Promise<T> {
+  const response = await send(path, body)
   return (await response.json()) as T
+}
+
+export type AnalysisStage = 'checking' | 'cloning' | 'analysing'
+
+type StreamLine =
+  | { stage: AnalysisStage }
+  | { result: RepositoryAnalysis }
+  | { error: { code: string; message: string } }
+
+/** Analyse a repository, reporting each real stage as the server reaches it. */
+export async function analyzeRepositoryStream(
+  url: string,
+  onStage: (stage: AnalysisStage) => void,
+): Promise<RepositoryAnalysis> {
+  const response = await send('/api/repositories/analyze/stream', { url })
+  if (!response.body) throw new ApiError(0, 'stream_error', 'The browser could not read the response.')
+  const reader = response.body.pipeThrough(new TextDecoderStream()).getReader()
+  let buffer = ''
+  for (;;) {
+    const { value, done } = await reader.read()
+    if (value) buffer += value
+    let newline = buffer.indexOf('\n')
+    while (newline !== -1) {
+      const raw = buffer.slice(0, newline).trim()
+      buffer = buffer.slice(newline + 1)
+      newline = buffer.indexOf('\n')
+      if (!raw) continue
+      const line = JSON.parse(raw) as StreamLine
+      if ('stage' in line) onStage(line.stage)
+      else if ('result' in line) return line.result
+      else if ('error' in line) throw new ApiError(200, line.error.code, line.error.message)
+    }
+    if (done) break
+  }
+  throw new ApiError(0, 'stream_ended', 'The analysis stopped before it finished. Try again.')
 }
 
 export function scanRepository(url: string): Promise<RepositoryScan> {

@@ -34,7 +34,7 @@ export function Layout() {
           <div>
             <p className="font-display text-3xl leading-none">RepoLens</p>
             <p className="mt-2 text-sm text-ink-soft">
-              Reads public GitHub repositories. Nothing is kept after a scan.
+              Reads public GitHub repositories. Clones are deleted after each analysis.
             </p>
           </div>
           <div className="flex gap-5 text-sm text-ink-soft">
