@@ -367,3 +367,8 @@
     transition: none;
   }
 }
+
+/* Mermaid draws soft drop shadows; keep the flat, hard-edged look instead. */
+.mermaid-figure svg * {
+  filter: none !important;
+}

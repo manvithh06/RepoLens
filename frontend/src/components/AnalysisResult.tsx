@@ -5,6 +5,7 @@ import type { RepositoryAnalysis } from '../types/api'
 import { Architecture } from './analysis/Architecture'
 import { EntryPoints } from './analysis/EntryPoints'
 import { FileTree } from './analysis/FileTree'
+import { GuidedTour } from './analysis/GuidedTour'
 import { Improvements } from './analysis/Improvements'
 import { Overview } from './analysis/Overview'
 import { Packages } from './analysis/Packages'
@@ -13,6 +14,7 @@ import { BarList, Panel } from './ui'
 
 const SECTIONS = [
   ['overview', 'Overview'],
+  ['tour', 'Tour'],
   ['stack', 'Stack'],
   ['entry-points', 'Entry points'],
   ['architecture', 'Architecture'],
@@ -61,6 +63,7 @@ export function AnalysisResult({ analysis }: { analysis: RepositoryAnalysis }) {
 
       <div className="space-y-8">
         <Overview analysis={analysis} index={number('overview')} />
+        <GuidedTour analysisId={analysis.analysis_id} index={number('tour')} />
         <Stack frameworks={analysis.frameworks} index={number('stack')} />
         <EntryPoints entries={analysis.entry_points} index={number('entry-points')} />
         <Architecture architecture={analysis.architecture} graph={analysis.graph} index={number('architecture')} />

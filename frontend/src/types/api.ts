@@ -179,3 +179,23 @@ export interface Finding {
   why: string
   fix: string
 }
+
+export interface Citation {
+  path: string
+  line: number | null
+  is_dir: boolean
+}
+
+export interface Tour {
+  analysis_id: string
+  model: string
+  commit: string | null
+  overview: { text: string; citations: Citation[]; verified: boolean } | null
+  steps: { title: string; detail: string; citations: Citation[] }[]
+  modules: { name: string; path: string; summary: string; citations: Citation[] }[]
+  start_here: { path: string; reason: string }[]
+  diagram: string | null
+  files_read: string[]
+  dropped_claims: number
+  cached: boolean
+}
