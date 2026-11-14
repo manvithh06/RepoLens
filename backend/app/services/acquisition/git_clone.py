@@ -31,6 +31,7 @@ _ENV_ALLOWLIST = (
 )
 
 _clone_slots = asyncio.Semaphore(MAX_CONCURRENT_CLONES)
+_COMMIT = re.compile(r"[0-9a-f]{40}([0-9a-f]{24})?")
 
 
 def _is_safe_branch(branch: str) -> bool:
@@ -77,6 +78,34 @@ async def _run_git(args: list[str], allowed_protocols: str, timeout: float) -> N
         raise CloneFailed("Could not download the repository. Try again shortly.")
 
 
+def read_head_commit(git_dir: Path) -> str | None:
+    """Read the checked-out commit id from .git without running git. None if unclear."""
+    try:
+        head = (git_dir / "HEAD").read_text(encoding="ascii", errors="replace").strip()
+        if head.startswith("ref: "):
+            ref = head[5:].strip()
+            if not ref.startswith("refs/") or ".." in ref:
+                return None
+            ref_file = git_dir / ref
+            if ref_file.is_file() and not ref_file.is_symlink():
+                head = ref_file.read_text(encoding="ascii", errors="replace").strip()
+            else:
+                packed = (git_dir / "packed-refs").read_text(
+                    encoding="ascii", errors="replace"
+                )
+                head = next(
+                    (
+                        line.split()[0]
+                        for line in packed.splitlines()
+                        if line.endswith(f" {ref}")
+                    ),
+                    "",
+                )
+    except OSError:
+        return None
+    return head if _COMMIT.fullmatch(head) else None
+
+
 async def shallow_clone(
     url: str,
     branch: str,
@@ -84,8 +113,11 @@ async def shallow_clone(
     *,
     allowed_protocols: str = "https",
     timeout: float = CLONE_TIMEOUT_SECONDS,
-) -> None:
-    """Download only the latest snapshot of one branch, then drop the .git folder."""
+) -> str | None:
+    """Download only the latest snapshot of one branch, then drop the .git folder.
+
+    Returns the commit id that was checked out, when it can be read.
+    """
     if not _is_safe_branch(branch):
         raise CloneFailed("The repository's default branch name is not supported.")
     if _clone_slots.locked():
@@ -112,4 +144,6 @@ async def shallow_clone(
     async with _clone_slots:
         await _run_git(args, allowed_protocols, timeout)
 
+    commit = read_head_commit(destination / ".git")
     remove_tree(destination / ".git")
+    return commit

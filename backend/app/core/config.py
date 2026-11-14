@@ -13,6 +13,7 @@ class Settings(BaseSettings):
         env_file=BACKEND_DIR / ".env",
         env_file_encoding="utf-8",
         extra="ignore",
+        env_ignore_empty=True,
     )
 
     app_name: str = "RepoLens"
@@ -21,6 +22,10 @@ class Settings(BaseSettings):
     cors_origins: str = "http://localhost:5173"
     github_token: SecretStr = SecretStr("")
     workspace_dir: Path = BACKEND_DIR / "workspace"
+    # Hugging Face Inference, used for the guided tour and chat. Never sent to the browser.
+    hf_token: SecretStr = SecretStr("")
+    hf_model: str = "openai/gpt-oss-120b"
+    hf_provider: str = "auto"
 
     @property
     def is_development(self) -> bool:

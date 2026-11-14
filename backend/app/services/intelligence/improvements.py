@@ -285,6 +285,15 @@ _PLACEHOLDER = re.compile(
 )
 
 
+def redact_secrets(text: str) -> str:
+    """Mask anything that looks like a credential before text leaves the server."""
+    for _, pattern in _SECRET_PATTERNS:
+        text = pattern.sub(lambda m: mask_secret(m.group(0)), text)
+    return _GENERIC_SECRET.sub(
+        lambda m: m.group(0).replace(m.group(2), mask_secret(m.group(2))), text
+    )
+
+
 def mask_secret(value: str) -> str:
     """Show only the first four characters, so a value can be recognised, not reused."""
     return f"{value[:4]}{'*' * min(8, max(4, len(value) - 4))}"

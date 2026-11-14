@@ -172,7 +172,7 @@ def build_import_graph(reader: RepoReader, imports: ImportResult) -> ImportGraph
 # ---------- architecture ----------
 
 
-def _group_at(path: str, depth: int) -> str:
+def group_at(path: str, depth: int) -> str:
     folder = dirname(path)
     if not folder:
         return ROOT_GROUP
@@ -186,7 +186,7 @@ def module_kind(group: str) -> ModuleKind:
 def _choose_depth(files: list[str]) -> int:
     best = 1
     for depth in range(1, MAX_ARCHITECTURE_DEPTH + 1):
-        if len({_group_at(p, depth) for p in files}) <= MAX_ARCHITECTURE_GROUPS:
+        if len({group_at(p, depth) for p in files}) <= MAX_ARCHITECTURE_GROUPS:
             best = depth
     return best
 
@@ -197,7 +197,7 @@ def build_architecture(reader: RepoReader, imports: ImportResult) -> Architectur
         return ArchitectureGraph(depth=0, modules=[], edges=[])
 
     depth = _choose_depth(files)
-    group_of = {path: _group_at(path, depth) for path in files}
+    group_of = {path: group_at(path, depth) for path in files}
 
     counts = Counter(group_of.values())
     if len(counts) > MAX_ARCHITECTURE_GROUPS:

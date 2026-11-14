@@ -21,6 +21,7 @@ class AcquiredRepository:
     info: RepositoryInfo
     root: Path
     filtered: FilterResult
+    commit: str | None = None
 
 
 @asynccontextmanager
@@ -32,9 +33,9 @@ async def acquired_repository(
     """Clone and filter a repository. The files are deleted when the `async with` block ends."""
     with temporary_workspace(workspace_base) as workspace:
         root = workspace / "repo"
-        await shallow_clone(ref.clone_url, info.default_branch, root)
+        commit = await shallow_clone(ref.clone_url, info.default_branch, root)
         filtered = await asyncio.to_thread(filter_repository, root)
-        yield AcquiredRepository(info=info, root=root, filtered=filtered)
+        yield AcquiredRepository(info=info, root=root, filtered=filtered, commit=commit)
 
 
 def summarize_scan(repo: AcquiredRepository) -> RepositoryScan:

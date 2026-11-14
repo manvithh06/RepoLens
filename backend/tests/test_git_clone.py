@@ -39,8 +39,8 @@ def source_repo(tmp_path: Path) -> Path:
     return repo
 
 
-def _clone(source: Path, destination: Path, timeout: float = 120.0) -> None:
-    asyncio.run(
+def _clone(source: Path, destination: Path, timeout: float = 120.0) -> str | None:
+    return asyncio.run(
         shallow_clone(
             source.as_uri(),
             "main",
@@ -56,8 +56,15 @@ def test_clone_copies_files_and_removes_git_folder(
 ) -> None:
     destination = tmp_path / "dest"
 
-    _clone(source_repo, destination)
+    commit = _clone(source_repo, destination)
 
+    expected = subprocess.run(
+        ["git", "-C", str(source_repo), "rev-parse", "HEAD"],
+        capture_output=True,
+        text=True,
+        check=True,
+    ).stdout.strip()
+    assert commit == expected
     assert (destination / "README.md").read_text() == "hello\n"
     assert (destination / "src" / "app.py").exists()
     assert not (destination / ".git").exists()
