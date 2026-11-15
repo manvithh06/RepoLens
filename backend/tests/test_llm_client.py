@@ -141,6 +141,8 @@ def test_hf_model_alias_still_works(monkeypatch: pytest.MonkeyPatch) -> None:
         Settings(llm_base_url=GROQ_URL, llm_api_key="", hf_token=""),
         # An HF token is never sent to a non-Hugging Face endpoint.
         Settings(llm_base_url=GROQ_URL, llm_api_key="", hf_token="hf_" + "x" * 30),
+        # A Groq key is never sent to Hugging Face when LLM_BASE_URL is missing.
+        Settings(llm_base_url="", llm_api_key=FAKE_KEY, hf_token=""),
         # Unknown endpoints need an explicit model.
         Settings(llm_base_url="https://llm.example/v1", llm_api_key="k", llm_model=""),
     ],

@@ -243,7 +243,9 @@ def build_client(settings: Settings, sleep: Sleep = asyncio.sleep) -> ChatClient
     model = settings.llm_model.strip()
 
     if not base_url:
-        # Hugging Face, unchanged: HF_TOKEN, or LLM_API_KEY holding a Hugging Face token.
+        # Hugging Face, unchanged: LLM_API_KEY if it is a Hugging Face token, else
+        # HF_TOKEN. Another provider's key (say GROQ_API_KEY) is never sent to Hugging Face.
+        key = key if key.startswith("hf_") else ""
         key = key or settings.hf_token.get_secret_value().strip()
         if not key:
             raise LLMNotConfigured("AI features are not configured on this server.")
