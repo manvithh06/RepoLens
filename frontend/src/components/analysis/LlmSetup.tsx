@@ -1,27 +1,18 @@
 export function LlmSetup({ feature }: { feature: string }) {
   return (
-    <div className="border-[1.5px] border-dashed border-ink p-5 text-sm leading-6 text-ink">
-      <p className="font-medium">{feature} needs a Hugging Face token.</p>
-      <ol className="mt-3 list-decimal space-y-1.5 pl-5 text-ink-soft">
-        <li>
-          Create a token at{' '}
-          <a
-            href="https://huggingface.co/settings/tokens"
-            target="_blank"
-            rel="noreferrer noopener"
-            className="text-signal-deep underline"
-          >
-            huggingface.co/settings/tokens
-          </a>{' '}
-          with permission to make calls to Inference Providers.
-        </li>
-        <li>
-          Add it to <code className="font-mono text-ink">backend/.env</code> as{' '}
-          <code className="font-mono text-ink">HF_TOKEN=your_token</code>.
-        </li>
-        <li>Restart the backend and analyse the repository again.</li>
-      </ol>
-      <p className="mt-3 text-ink-soft">Everything else in this report works without it.</p>
+    <div className="border-[1.5px] border-dashed border-line p-5 text-sm leading-6 text-ink-soft">
+      <p>
+        <span className="font-medium text-ink">AI features are not configured on this server.</span>{' '}
+        {feature} needs a language model, so it is switched off here. Everything else in this
+        report works without it.
+      </p>
+      {import.meta.env.DEV && (
+        <p className="mt-2 text-xs text-ink-faint">
+          For local development, set <code className="font-mono">LLM_BASE_URL</code> and{' '}
+          <code className="font-mono">LLM_API_KEY</code> (or <code className="font-mono">HF_TOKEN</code>)
+          in <code className="font-mono">backend/.env</code>, then restart the backend.
+        </p>
+      )}
     </div>
   )
 }

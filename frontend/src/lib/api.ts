@@ -21,6 +21,25 @@ export class ApiError extends Error {
   }
 }
 
+// Errors that will not clear up by asking again, so the UI offers no "Try again".
+const FINAL_ERRORS = new Set([
+  'llm_not_configured',
+  'llm_auth_failed',
+  'llm_quota_exhausted',
+  'llm_model_unavailable',
+  'llm_request_rejected',
+  'analysis_not_found',
+  'validation_error',
+])
+
+export function isRetryable(error: unknown): boolean {
+  return !(error instanceof ApiError && FINAL_ERRORS.has(error.code))
+}
+
+export function isNotConfigured(error: unknown): boolean {
+  return error instanceof ApiError && error.code === 'llm_not_configured'
+}
+
 async function send(path: string, body: unknown): Promise<Response> {
   let response: Response
   try {

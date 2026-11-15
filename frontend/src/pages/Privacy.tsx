@@ -26,8 +26,8 @@ export function Privacy() {
 
       <h2 className="pt-2 text-base font-semibold">What happens to the repository</h2>
       <p>
-        The repository is downloaded into a temporary folder on our server and deleted when the
-        analysis finishes. Only public repositories are supported. Do not submit private code.
+        The repository is cloned into a temporary folder on our server, and the clone is deleted
+        as soon as the analysis finishes. Only public repositories are supported. Do not submit private code.
       </p>
       <p>
         So that the guided tour and chat can work after the download is deleted, excerpts of the
@@ -37,15 +37,16 @@ export function Privacy() {
         left out.
       </p>
 
-      <h2 className="pt-2 text-base font-semibold">Language model processing</h2>
+      <h2 className="pt-2 text-base font-semibold">AI provider processing</h2>
       <p>
-        The guided tour and the chat send repository content to a language model hosted through
-        Hugging Face Inference Providers. For the tour this is up to twelve key files, such as the
-        README, entry points and the most imported modules. For chat it is the code sections that
-        best match your question, together with the question itself and your earlier questions in
-        the same conversation. Hugging Face and the provider that runs the model process this data
-        under their own terms and privacy policies. The rest of the report (structure, stack,
-        architecture and improvements) is produced on our server without a language model.
+        To produce the guided tour and chat answers, excerpts of the analysed public repository
+        are sent to the AI provider configured for this deployment, which is currently Groq. For
+        the tour these are short excerpts of a few key files, such as the README, entry points and
+        the most imported modules. For chat they are the code sections that best match your
+        question, together with the question itself and your earlier questions in the same
+        conversation. The provider processes this data under its own terms and privacy policy.
+        The rest of the report (structure, stack, architecture and improvements) is produced on
+        our server without an AI provider.
       </p>
 
       <h2 className="pt-2 text-base font-semibold">Cookies and tracking</h2>
@@ -53,8 +54,8 @@ export function Privacy() {
 
       <h2 className="pt-2 text-base font-semibold">Third parties</h2>
       <p>
-        We rely on GitHub to supply repositories, on Hugging Face and its inference providers to
-        run the language model, and on our hosting provider to run the service. Their own privacy
+        We rely on GitHub to supply repositories, on the configured AI provider (currently Groq)
+        to run the language model, and on our hosting provider to run the service. Their own privacy
         policies apply to the data they handle.
       </p>
 

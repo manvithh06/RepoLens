@@ -1,7 +1,7 @@
 import { useMutation } from '@tanstack/react-query'
-import { ArrowUp, LoaderCircle } from 'lucide-react'
+import { ArrowUp, LoaderCircle, RotateCcw } from 'lucide-react'
 import { useState, type FormEvent } from 'react'
-import { ApiError, askRepository } from '../../lib/api'
+import { ApiError, askRepository, isNotConfigured, isRetryable } from '../../lib/api'
 import { useRepoLinks } from '../../lib/repoLinks'
 import { sourceUrl } from '../../lib/format'
 import type { ChatAnswer, ChatCitation, ChatTurn } from '../../types/api'
@@ -10,6 +10,7 @@ import { LlmSetup } from './LlmSetup'
 
 interface Message {
   question: string
+  history: ChatTurn[]
   answer?: ChatAnswer
   error?: ApiError
 }
@@ -83,10 +84,33 @@ function CitationList({ items }: { items: ChatCitation[] }) {
   )
 }
 
-function AnswerView({ message }: { message: Message }) {
+function AnswerView({
+  message,
+  onRetry,
+  busy,
+}: {
+  message: Message
+  onRetry: () => void
+  busy: boolean
+}) {
   if (message.error) {
-    if (message.error.code === 'llm_not_configured') return <LlmSetup feature="Chat" />
-    return <Notice tone="danger">{message.error.message}</Notice>
+    if (isNotConfigured(message.error)) return <LlmSetup feature="Chat" />
+    return (
+      <div role="alert" className="space-y-2">
+        <Notice tone="danger">{message.error.message}</Notice>
+        {isRetryable(message.error) && (
+          <button
+            type="button"
+            onClick={onRetry}
+            disabled={busy}
+            className="inline-flex items-center gap-2 rounded-sm border-[1.5px] border-ink px-3 py-1 text-sm text-ink hover:bg-ink hover:text-paper disabled:cursor-not-allowed disabled:opacity-40"
+          >
+            <RotateCcw size={14} aria-hidden="true" />
+            Try again
+          </button>
+        )}
+      </div>
+    )
   }
   const answer = message.answer
   if (!answer) {
@@ -127,20 +151,9 @@ export function RepoChat({ analysisId, index }: { analysisId: string; index: str
       askRepository(analysisId, question, history),
   })
 
-  function send(question: string) {
-    const trimmed = question.trim()
-    if (!trimmed || ask.isPending) return
-    const history: ChatTurn[] = messages.flatMap((message) => [
-      { role: 'user' as const, content: message.question },
-      ...(message.answer
-        ? [{ role: 'assistant' as const, content: message.answer.answer.slice(0, 2000) }]
-        : []),
-    ]).slice(-6)
-    const position = messages.length
-    setMessages((current) => [...current, { question: trimmed }])
-    setDraft('')
+  function run(position: number, question: string, history: ChatTurn[]) {
     ask.mutate(
-      { question: trimmed, history },
+      { question, history },
       {
         onSuccess: (answer) =>
           setMessages((current) =>
@@ -156,6 +169,29 @@ export function RepoChat({ analysisId, index }: { analysisId: string; index: str
           ),
       },
     )
+  }
+
+  function send(question: string) {
+    const trimmed = question.trim()
+    if (!trimmed || ask.isPending) return
+    const history: ChatTurn[] = messages.flatMap((message) => [
+      { role: 'user' as const, content: message.question },
+      ...(message.answer
+        ? [{ role: 'assistant' as const, content: message.answer.answer.slice(0, 2000) }]
+        : []),
+    ]).slice(-6)
+    setMessages((current) => [...current, { question: trimmed, history }])
+    setDraft('')
+    run(messages.length, trimmed, history)
+  }
+
+  function retry(position: number) {
+    const message = messages[position]
+    if (!message || ask.isPending) return
+    setMessages((current) =>
+      current.map((m, i) => (i === position ? { question: m.question, history: m.history } : m)),
+    )
+    run(position, message.question, message.history)
   }
 
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
@@ -193,7 +229,11 @@ export function RepoChat({ analysisId, index }: { analysisId: string; index: str
                 <span className="mr-2 font-mono text-xs text-signal">Q{position + 1}</span>
                 {message.question}
               </p>
-              <AnswerView message={message} />
+              <AnswerView
+                message={message}
+                onRetry={() => retry(position)}
+                busy={ask.isPending}
+              />
             </li>
           ))}
         </ol>
@@ -232,7 +272,7 @@ export function RepoChat({ analysisId, index }: { analysisId: string; index: str
         </button>
       </form>
       <p className="mt-3 text-xs text-ink-faint">
-        Retrieval is keyword based (BM25). Code and your question are sent to a Hugging Face model.
+        Retrieval is keyword based (BM25). Matching code and your question are sent to the configured AI provider.
       </p>
     </Panel>
   )

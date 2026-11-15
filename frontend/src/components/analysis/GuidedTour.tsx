@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
 import { LoaderCircle, RotateCcw, TriangleAlert } from 'lucide-react'
-import { ApiError, fetchTour } from '../../lib/api'
+import { fetchTour, isNotConfigured, isRetryable } from '../../lib/api'
 import { formatCount } from '../../lib/format'
 import type { Citation, Tour } from '../../types/api'
 import { Notice, Panel, SourceLink } from '../ui'
@@ -125,7 +125,7 @@ export function GuidedTour({ analysisId, index }: { analysisId: string; index: s
     staleTime: Infinity,
     refetchOnWindowFocus: false,
   })
-  const notConfigured = tour.error instanceof ApiError && tour.error.code === 'llm_not_configured'
+  const notConfigured = isNotConfigured(tour.error)
 
   return (
     <Panel index={index} title="Guided tour" id="tour">
@@ -147,14 +147,17 @@ export function GuidedTour({ analysisId, index }: { analysisId: string; index: s
               {tour.error.message}
             </span>
           </Notice>
-          <button
-            type="button"
-            onClick={() => tour.refetch()}
-            className="inline-flex items-center gap-2 rounded-sm border-[1.5px] border-ink px-3 py-1.5 text-sm text-ink hover:bg-ink hover:text-paper"
-          >
-            <RotateCcw size={14} aria-hidden="true" />
-            Try again
-          </button>
+          {isRetryable(tour.error) && (
+            <button
+              type="button"
+              onClick={() => tour.refetch()}
+              disabled={tour.isFetching}
+              className="inline-flex items-center gap-2 rounded-sm border-[1.5px] border-ink px-3 py-1.5 text-sm text-ink hover:bg-ink hover:text-paper disabled:cursor-wait disabled:opacity-50"
+            >
+              <RotateCcw size={14} aria-hidden="true" />
+              {tour.isFetching ? 'Trying again' : 'Try again'}
+            </button>
+          )}
         </div>
       )}
       {tour.isSuccess && <TourBody tour={tour.data} />}
