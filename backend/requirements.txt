@@ -1,26 +1,6 @@
-# Web framework and server
-fastapi
-uvicorn[standard]
-pydantic-settings
-
-# Phase 3: GitHub API and repo acquisition
-httpx
-
-# Phases 4 and 5: analysis uses only the standard library (ast, tomllib, re)
-
-# Phase 6: Hugging Face LLM access
-huggingface_hub
-
-# Phase 7: keyword search for repository chat. Embeddings (sentence-transformers and
-# FAISS) are left out on purpose: they pull in PyTorch and would add minutes of CPU
-# work to every analysis.
-rank-bm25
-
-# Development
-pytest
-ruff
-
-# Phase 11: database
-sqlalchemy
-alembic
-psycopg[binary]
+fastapi==0.162.7
+httpx==0.28.1
+huggingface_hub==2.4.0
+pydantic-settings==2.16.3
+rank-bm25==0.2.2
+uvicorn[standard]==0.54.0
