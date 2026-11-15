@@ -1,3 +1,5 @@
+from dataclasses import dataclass
+
 # Every safety limit lives here so it is easy to find and change.
 
 # GitHub reports repository size in kilobytes.
@@ -41,6 +43,8 @@ MAX_STORED_ANALYSIS_BYTES = (
 # Guided tour (LLM). Every call is capped.
 LLM_TIMEOUT_SECONDS = 90.0
 LLM_CONCURRENCY = 4
+LLM_MAX_RETRY_WAIT_SECONDS = 20.0  # a longer Retry-After fails at once instead
+LLM_RETRY_WAIT_SECONDS = 2.0  # when the provider gives no Retry-After
 MAX_TOUR_FILES = 12
 MAX_TOUR_FILE_CHARS = 6_000
 MAX_TOUR_FOLDERS = 8
@@ -62,6 +66,52 @@ CHAT_MIN_SCORE = 1.0  # below this BM25 score nothing relevant was found
 LLM_MAX_TOKENS_CHAT = 2_000
 MAX_CHAT_QUESTION_CHARS = 1_000
 MAX_CHAT_HISTORY = 6
+
+
+@dataclass(frozen=True)
+class LLMBudget:
+    """How much repository text one tour or chat answer may send to the model."""
+
+    tour_files: int
+    tour_file_chars: int
+    tour_folders: int
+    max_tokens_file: int
+    max_tokens_folder: int
+    max_tokens_repo: int
+    chat_snippets: int
+    chat_snippet_chars: int
+    max_tokens_chat: int
+    concurrency: int
+
+
+# Hugging Face Inference Providers: the original limits.
+HF_BUDGET = LLMBudget(
+    tour_files=MAX_TOUR_FILES,
+    tour_file_chars=MAX_TOUR_FILE_CHARS,
+    tour_folders=MAX_TOUR_FOLDERS,
+    max_tokens_file=LLM_MAX_TOKENS_FILE,
+    max_tokens_folder=LLM_MAX_TOKENS_FOLDER,
+    max_tokens_repo=LLM_MAX_TOKENS_REPO,
+    chat_snippets=CHAT_TOP_K,
+    chat_snippet_chars=2_500,
+    max_tokens_chat=LLM_MAX_TOKENS_CHAT,
+    concurrency=LLM_CONCURRENCY,
+)
+
+# OpenAI-compatible endpoints such as Groq. Sized for a free tier of about 8,000
+# tokens per minute: a whole tour is roughly 8 calls and 12,000 tokens.
+COMPACT_BUDGET = LLMBudget(
+    tour_files=5,
+    tour_file_chars=2_500,
+    tour_folders=2,
+    max_tokens_file=500,
+    max_tokens_folder=350,
+    max_tokens_repo=2_000,
+    chat_snippets=5,
+    chat_snippet_chars=1_500,
+    max_tokens_chat=900,
+    concurrency=2,
+)
 
 # Per-IP rate limits on the expensive endpoints: (requests, window in seconds).
 RATE_LIMIT_ANALYZE = (10, 10 * 60)

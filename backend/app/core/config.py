@@ -1,7 +1,7 @@
 from functools import lru_cache
 from pathlib import Path
 
-from pydantic import SecretStr
+from pydantic import AliasChoices, Field, SecretStr
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 # backend/app/core/config.py -> parents[2] is the backend/ folder
@@ -14,6 +14,7 @@ class Settings(BaseSettings):
         env_file_encoding="utf-8",
         extra="ignore",
         env_ignore_empty=True,
+        populate_by_name=True,
     )
 
     app_name: str = "RepoLens"
@@ -22,9 +23,18 @@ class Settings(BaseSettings):
     cors_origins: str = "http://localhost:5173"
     github_token: SecretStr = SecretStr("")
     workspace_dir: Path = BACKEND_DIR / "workspace"
-    # Hugging Face Inference, used for the guided tour and chat. Never sent to the browser.
+    # Language model for the guided tour and chat. Keys are never sent to the browser.
+    # With LLM_BASE_URL set, any OpenAI-compatible endpoint is used (for example Groq).
+    # Without it, Hugging Face Inference Providers are used with HF_TOKEN.
+    llm_base_url: str = ""
+    llm_api_key: SecretStr = Field(
+        default=SecretStr(""),
+        validation_alias=AliasChoices("LLM_API_KEY", "GROQ_API_KEY"),
+    )
+    llm_model: str = Field(
+        default="", validation_alias=AliasChoices("LLM_MODEL", "HF_MODEL")
+    )
     hf_token: SecretStr = SecretStr("")
-    hf_model: str = "openai/gpt-oss-120b"
     hf_provider: str = "auto"
 
     @property

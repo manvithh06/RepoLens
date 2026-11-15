@@ -2,14 +2,14 @@
 
 import re
 
-from app.core.limits import LLM_MAX_TOKENS_CHAT
 from app.schemas.chat import ChatAnswer, ChatCitation, ChatTurn
 from app.services.chat.index import ChatIndex, Hit
+from app.services.llm.client import LLMClient, budget_of
+from app.services.llm.errors import LLMBadOutput
+from app.services.llm.output import ask_json
 from app.services.store import StoredAnalysis
-from app.services.tour.llm import LLMBadOutput, LLMClient, parse_json_object
 from app.services.tour.tour import SYSTEM_PROMPT, wrap_data
 
-MAX_SNIPPET_CHARS = 2_500
 MAX_ANSWER_CHARS = 3_000
 RELATED_ON_REFUSAL = 3
 
@@ -32,7 +32,7 @@ project. If the snippets do not answer the question, set answerable to false."""
 _SNIPPET_ID = re.compile(r"^S(\d+)$")
 
 
-def _citation(index: int, hit: Hit) -> ChatCitation:
+def _citation(index: int, hit: Hit, max_chars: int) -> ChatCitation:
     chunk = hit.chunk
     return ChatCitation(
         id=f"S{index}",
@@ -40,7 +40,7 @@ def _citation(index: int, hit: Hit) -> ChatCitation:
         start_line=chunk.start_line,
         end_line=chunk.end_line,
         symbol=chunk.symbol,
-        snippet=chunk.text[:MAX_SNIPPET_CHARS],
+        snippet=chunk.text[:max_chars],
     )
 
 
@@ -94,16 +94,21 @@ async def answer_question(
     if index is None:
         raise LLMBadOutput("This repository has no readable files to search.")
 
+    budget = budget_of(client)
     last_user = next((t.content for t in reversed(history) if t.role == "user"), "")
-    hits = index.search(question) or index.search(f"{question} {last_user[:300]}")
+    hits = index.search(question, budget.chat_snippets) or index.search(
+        f"{question} {last_user[:300]}", budget.chat_snippets
+    )
     if not hits:
         return _refusal(NOTHING_FOUND, [], index, None)
 
-    snippets = [_citation(number, hit) for number, hit in enumerate(hits, start=1)]
-    reply = await client.complete(
-        CHAT_RULES, _prompt(question, history, snippets), LLM_MAX_TOKENS_CHAT
+    snippets = [
+        _citation(number, hit, budget.chat_snippet_chars)
+        for number, hit in enumerate(hits, start=1)
+    ]
+    raw = await ask_json(
+        client, CHAT_RULES, _prompt(question, history, snippets), budget.max_tokens_chat
     )
-    raw = parse_json_object(reply)
 
     by_id = {s.id: s for s in snippets}
     cited: list[ChatCitation] = []

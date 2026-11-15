@@ -161,7 +161,7 @@ def api(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Iterator[TestClient]
         write_repo(destination, FILES)
 
     app.dependency_overrides[get_settings] = lambda: Settings(
-        workspace_dir=tmp_path / "ws", hf_token=""
+        workspace_dir=tmp_path / "ws", hf_token="", llm_api_key="", llm_base_url=""
     )
     monkeypatch.setattr(repositories_route, "fetch_repo_info", _fake_fetch)
     monkeypatch.setattr(repository_module, "shallow_clone", clone)

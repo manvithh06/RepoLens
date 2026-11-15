@@ -14,8 +14,9 @@ from app.services.acquisition import repository as repository_module
 from app.services.acquisition.file_filter import filter_repository
 from app.services.acquisition.repository import AcquiredRepository
 from app.services.intelligence.analysis import analyze_repository
+from app.services.llm.errors import LLMBadOutput, LLMUnavailable
+from app.services.llm.output import parse_json_object
 from app.services.store import AnalysisNotFound, AnalysisStore, StoredAnalysis
-from app.services.tour.llm import LLMBadOutput, LLMUnavailable, parse_json_object
 from app.services.tour.tour import (
     SYSTEM_PROMPT,
     assemble_tour,
@@ -256,7 +257,7 @@ async def _fake_clone(url: str, branch: str, destination: Path) -> str:
 @pytest.fixture
 def api(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Iterator[TestClient]:
     app.dependency_overrides[get_settings] = lambda: Settings(
-        workspace_dir=tmp_path / "ws", hf_token=""
+        workspace_dir=tmp_path / "ws", hf_token="", llm_api_key="", llm_base_url=""
     )
     monkeypatch.setattr(repositories_route, "fetch_repo_info", _fake_fetch)
     monkeypatch.setattr(repository_module, "shallow_clone", _fake_clone)
@@ -279,7 +280,7 @@ def test_tour_without_a_token_explains_what_to_do(api: TestClient) -> None:
     assert response.status_code == 503
     error = response.json()["error"]
     assert error["code"] == "llm_not_configured"
-    assert "HF_TOKEN" in error["message"]
+    assert error["message"] == "AI features are not configured on this server."
 
 
 def test_tour_endpoint_generates_then_caches(api: TestClient) -> None:

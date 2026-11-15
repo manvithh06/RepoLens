@@ -12,14 +12,7 @@ import time
 from collections import OrderedDict
 from typing import Any
 
-from app.core.limits import (
-    LLM_MAX_TOKENS_FILE,
-    LLM_MAX_TOKENS_FOLDER,
-    LLM_MAX_TOKENS_REPO,
-    MAX_CACHED_TOURS,
-    MAX_TOUR_FOLDERS,
-    TOUR_CACHE_SECONDS,
-)
+from app.core.limits import MAX_CACHED_TOURS, TOUR_CACHE_SECONDS
 from app.schemas.tour import (
     Citation,
     StartHere,
@@ -28,15 +21,11 @@ from app.schemas.tour import (
     TourOverview,
     TourStep,
 )
+from app.services.llm.client import LLMClient, budget_of
+from app.services.llm.errors import PROVIDER_ERRORS, LLMBadOutput
+from app.services.llm.output import ask_json
 from app.services.store import StoredAnalysis
-from app.services.tour.llm import (
-    LLMBadOutput,
-    LLMClient,
-    LLMRejected,
-    LLMUnavailable,
-    parse_json_object,
-)
-from app.services.tour.material import FileExcerpt, TourMaterial
+from app.services.tour.material import FileExcerpt, TourMaterial, trim_excerpt
 
 SYSTEM_PROMPT = """You are RepoLens, a careful guide who explains a software repository \
 to a developer seeing it for the first time.
@@ -117,8 +106,7 @@ def verify_citations(values: Any, stored: StoredAnalysis) -> list[Citation]:
 
 
 async def _ask(client: LLMClient, user: str, max_tokens: int) -> dict[str, Any]:
-    reply = await client.complete(SYSTEM_PROMPT, user, max_tokens)
-    return parse_json_object(reply)
+    return await ask_json(client, SYSTEM_PROMPT, user, max_tokens)
 
 
 async def summarize_file(client: LLMClient, excerpt: FileExcerpt) -> dict[str, Any]:
@@ -132,7 +120,7 @@ async def summarize_file(client: LLMClient, excerpt: FileExcerpt) -> dict[str, A
         f"File: {excerpt.path}{note}\nPicked because: {excerpt.reason}\n"
         + wrap_data(excerpt.text)
     )
-    return await _ask(client, user, LLM_MAX_TOKENS_FILE)
+    return await _ask(client, user, budget_of(client).max_tokens_file)
 
 
 async def summarize_folder(
@@ -155,7 +143,7 @@ async def summarize_folder(
             f"Files in the folder:\n{chr(10).join(listing)}\n\nSummaries:\n{known}"
         )
     )
-    return await _ask(client, user, LLM_MAX_TOKENS_FOLDER)
+    return await _ask(client, user, budget_of(client).max_tokens_folder)
 
 
 async def write_repo_tour(
@@ -196,7 +184,7 @@ async def write_repo_tour(
         f"{MAX_START_HERE} files in reading order. Every item must cite at least one "
         "path that appears in the data.\n\n" + wrap_data(facts)
     )
-    return await _ask(client, user, LLM_MAX_TOKENS_REPO)
+    return await _ask(client, user, budget_of(client).max_tokens_repo)
 
 
 # ---------- assembling the verified tour ----------
@@ -304,20 +292,23 @@ async def generate_tour(stored: StoredAnalysis, client: LLMClient) -> Tour:
     material: TourMaterial | None = stored.tour_material
     if material is None or not material.files:
         raise LLMBadOutput("There are no readable files to build a tour from.")
+    budget = budget_of(client)
+    excerpts = [
+        trim_excerpt(excerpt, budget.tour_file_chars)
+        for excerpt in material.files[: budget.tour_files]
+    ]
 
     # Stage 1: key files, in parallel (the client limits concurrency).
     results = await asyncio.gather(
-        *(summarize_file(client, excerpt) for excerpt in material.files),
+        *(summarize_file(client, excerpt) for excerpt in excerpts),
         return_exceptions=True,
     )
-    fatal = next(
-        (r for r in results if isinstance(r, (LLMRejected, LLMUnavailable))), None
-    )
+    fatal = next((r for r in results if isinstance(r, PROVIDER_ERRORS)), None)
     if fatal is not None and all(isinstance(r, Exception) for r in results):
         raise fatal
     file_summaries = {
         excerpt.path: result
-        for excerpt, result in zip(material.files, results, strict=True)
+        for excerpt, result in zip(excerpts, results, strict=True)
         if isinstance(result, dict)
     }
     if not file_summaries:
@@ -325,12 +316,12 @@ async def generate_tour(stored: StoredAnalysis, client: LLMClient) -> Tour:
 
     # Stage 2: the folders those files live in.
     by_folder: dict[str, dict[str, dict[str, Any]]] = {}
-    for excerpt in material.files:
+    for excerpt in excerpts:
         if excerpt.path in file_summaries:
             by_folder.setdefault(excerpt.module, {})[excerpt.path] = file_summaries[
                 excerpt.path
             ]
-    folders = sorted(by_folder, key=lambda f: -len(by_folder[f]))[:MAX_TOUR_FOLDERS]
+    folders = sorted(by_folder, key=lambda f: -len(by_folder[f]))[: budget.tour_folders]
     folder_results = await asyncio.gather(
         *(
             summarize_folder(client, f, material.folders.get(f, []), by_folder[f])

@@ -26,8 +26,8 @@ from app.services.acquisition.repository import acquired_repository, summarize_s
 from app.services.acquisition.url_validator import parse_github_url
 from app.services.chat.chat import answer_question
 from app.services.intelligence.analysis import analyze_repository
+from app.services.llm.client import LLMClient, build_client
 from app.services.store import analysis_store
-from app.services.tour.llm import LLMClient, build_client
 from app.services.tour.tour import get_or_create_tour
 
 logger = logging.getLogger(__name__)

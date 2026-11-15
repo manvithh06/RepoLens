@@ -4,7 +4,7 @@ Excerpts are line-numbered so the model can cite lines, secrets are masked, and 
 files are never included.
 """
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 
 from app.core.limits import MAX_TOUR_FILE_CHARS, MAX_TOUR_FILES
 from app.schemas.analysis import RepositoryAnalysis
@@ -46,6 +46,14 @@ def numbered_excerpt(text: str, limit: int = MAX_TOUR_FILE_CHARS) -> tuple[str, 
         lines.append(row)
         used += len(row) + 1
     return "\n".join(lines), False
+
+
+def trim_excerpt(excerpt: FileExcerpt, limit: int) -> FileExcerpt:
+    """Cut a numbered excerpt to at most `limit` characters, on a line boundary."""
+    if len(excerpt.text) <= limit:
+        return excerpt
+    cut = excerpt.text.rfind("\n", 0, limit + 1)
+    return replace(excerpt, text=excerpt.text[: max(cut, 0)], truncated=True)
 
 
 def _pick_files(
