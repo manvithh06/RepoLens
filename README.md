@@ -56,9 +56,15 @@ Open http://localhost:5173 and paste a repository URL.
 | Variable | Needed for | Notes |
 |---|---|---|
 | `GITHUB_TOKEN` | optional | Raises the GitHub API rate limit for repository checks. |
-| `HF_TOKEN` | guided tour and chat | A Hugging Face token allowed to call Inference Providers. Without it, everything else works and the UI explains how to add it. |
-| `HF_MODEL` | optional | Any chat model served by Hugging Face Inference Providers. Default: `openai/gpt-oss-120b` (Apache 2.0, not gated, served by many providers). |
+| `LLM_BASE_URL` | guided tour and chat | An OpenAI-compatible endpoint, for example `https://api.groq.com/openai/v1`. Empty means Hugging Face Inference Providers. |
+| `LLM_API_KEY` | guided tour and chat | Key for `LLM_BASE_URL` (`GROQ_API_KEY` also works). Without a key, everything else works and the UI says AI features are off. |
+| `LLM_MODEL` | optional | Model name (`HF_MODEL` also works). Groq default: `openai/gpt-oss-120b`. Required for endpoints other than Groq. |
+| `HF_TOKEN` | fallback | Used only when `LLM_BASE_URL` is empty: a Hugging Face token allowed to call Inference Providers. |
 | `CORS_ORIGINS` | deployment | Comma-separated frontend origins. |
+
+With `LLM_BASE_URL` set, prompts are kept small for free tiers (about 8,000 tokens per
+minute on Groq): a tour reads five key files, and chat sends five code sections. Tours are
+cached per commit, so a repeated view does not call the provider again.
 
 Secrets are read with `pydantic-settings` as `SecretStr`, never logged, and never sent to
 the browser.

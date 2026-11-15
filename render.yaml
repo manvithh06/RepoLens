@@ -14,9 +14,11 @@ services:
         sync: false
       - key: GITHUB_TOKEN
         sync: false
-      - key: HF_TOKEN
+      - key: LLM_BASE_URL
+        value: https://api.groq.com/openai/v1
+      - key: LLM_API_KEY
         sync: false
-      - key: HF_MODEL
+      - key: LLM_MODEL
         sync: false
 
   - type: web
